@@ -368,6 +368,33 @@ class ProjectViewSet(BaseViewSet):
 
     @action(
         detail=True,
+        url_path='augment',
+        url_name='augment',
+        methods=['POST'],
+    )
+    def augment(self, request, **kwargs):
+        return None
+
+    @action(
+        detail=True,
+        url_path='train',
+        url_name='train',
+        methods=['POST'],
+    )
+    def train(self, request, **kwargs):
+        return None
+
+    @action(
+        detail=True,
+        url_path='deepssm_test',
+        url_name='deepssm_test',
+        methods=['POST'],
+    )
+    def deepssm_test(self, request, **kwargs):
+        return None
+
+    @action(
+        detail=True,
         url_path='analyze',
         url_name='analyze',
         methods=['POST'],
