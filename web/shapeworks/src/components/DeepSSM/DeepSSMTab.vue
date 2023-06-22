@@ -10,12 +10,28 @@ export default defineComponent({
     setup() {
         const openTab = ref<number>(0);
 
-        const testSplit = ref<number>(20);
-        const validationSplit = ref<number>(20);
+        // Split
+        const splitData = {
+            testSplit: ref<number>(20),
+            validationSplit: ref<number>(20),
+        }
 
-        const numSamples = ref<number>(3);
-        const numDimensions = ref<number>(3);
-        const variablity = ref<number>(95);
+        // Augmentation
+        const augmentationData = {
+            numSamples: ref<number>(3),
+            numDimensions: ref<number>(3),
+            variablity: ref<number>(95),
+        }
+        // Training
+        const trainingData = {
+            epochs: ref<number>(2),
+            learningRate: ref<number>(0.001),
+            batchSize: ref<number>(8),
+            decayLearningRate: ref<boolean>(true),
+            fineTuning: ref<boolean>(true),
+            ftEpochs: ref<number>(2),
+            ftLearningRate: ref<number>(0.001),
+        }
 
         enum Sampler {
             Gaussian = "Gaussian",
@@ -29,11 +45,9 @@ export default defineComponent({
 
         return {
             openTab,
-            testSplit,
-            validationSplit,
-            numSamples,
-            numDimensions,
-            variablity,
+            splitData,
+            augmentationData,
+            trainingData,
             Sampler,
             samplerType,
         }
@@ -63,8 +77,8 @@ export default defineComponent({
                     Split
                 </v-expansion-panel-header>
                 <v-expansion-panel-content>
-                    <v-text-field v-model="testSplit" type="number" label="Test Split" suffix="%" />
-                    <v-text-field v-model="validationSplit" type="number" label="Validation Split" suffix="%" />
+                    <v-text-field v-model="splitData.testSplit" type="number" label="Test Split" suffix="%" />
+                    <v-text-field v-model="splitData.validationSplit" type="number" label="Validation Split" suffix="%" />
                 </v-expansion-panel-content>
             </v-expansion-panel>
             <v-expansion-panel>
@@ -72,9 +86,9 @@ export default defineComponent({
                     Augmentation
                 </v-expansion-panel-header>
                 <v-expansion-panel-content>
-                    <v-text-field v-model="numSamples" type="number" label="Number of Samples" min="1" />
-                    <v-text-field v-model="numDimensions" type="number" label="Number of PCA Dimensions" min="1" />
-                    <v-text-field v-model="variablity" type="number" label="Percent Variablity Preserved" min="0" max="100" suffix="%" />
+                    <v-text-field v-model="augmentationData.numSamples" type="number" label="Number of Samples" min="1" />
+                    <v-text-field v-model="augmentationData.numDimensions" type="number" label="Number of PCA Dimensions" min="1" />
+                    <v-text-field v-model="augmentationData.variablity" type="number" label="Percent Variablity Preserved" min="0" max="100" suffix="%" />
 
                     <v-select 
                         :items="Object.values(Sampler)"
@@ -90,19 +104,16 @@ export default defineComponent({
                     Training
                 </v-expansion-panel-header>
                 <v-expansion-panel-content>
-                    <!-- TODO: Add refs for all models -->
-                    <v-text-field v-model="epochs" type="number" label="Epochs" min="0" />
-                    <v-text-field v-model="learningRate" type="number" label="Learning Rate" min="0" />
-                    <v-text-field v-model="batchSize" type="number" label="Batch Size" min="1" />
+                    <v-text-field v-model="trainingData.epochs" type="number" label="Epochs" min="0" />
+                    <v-text-field v-model="trainingData.learningRate" type="number" label="Learning Rate" min="0" />
+                    <v-text-field v-model="trainingData.batchSize" type="number" label="Batch Size" min="1" />
 
-                    <!-- decay learning rate checkbox TODO ADD MODEL-->
-                    <v-checkbox label="Decay Learning Rate"></v-checkbox>
+                    <v-checkbox v-model="trainingData.decayLearningRate" label="Decay Learning Rate"></v-checkbox>
 
-                    <!-- fine tuning checkbox TODO ADD MODEL-->
-                    <v-checkbox label="Fine Tuning"></v-checkbox>
+                    <v-checkbox v-model="trainingData.fineTuning" label="Fine Tuning"></v-checkbox>
 
-                    <v-text-field v-model="ftEpochs" type="number" label="Fine Tuning Epochs" min="1" />
-                    <v-text-field v-model="ftLearningRate" type="number" label="Fine Tuning Learning Rate" min="0" />
+                    <v-text-field v-model="trainingData.ftEpochs" type="number" label="Fine Tuning Epochs" min="1" />
+                    <v-text-field v-model="trainingData.ftLearningRate" type="number" label="Fine Tuning Learning Rate" min="0" />
                     
                     <!-- TODO: needs sub-panel for training output -->
                 </v-expansion-panel-content>
