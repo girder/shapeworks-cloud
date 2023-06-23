@@ -116,6 +116,8 @@ export default defineComponent({
                     <v-text-field v-model="trainingData.ftLearningRate" type="number" label="Fine Tuning Learning Rate" min="0" />
                     
                     <!-- TODO: needs sub-panel for training output -->
+                    <!-- needs data table with "Original Data" and "Generated Data" options -->
+                    <!-- also needs violin plot to compare original and generated data -->
                 </v-expansion-panel-content>
             </v-expansion-panel>
             <v-expansion-panel>
