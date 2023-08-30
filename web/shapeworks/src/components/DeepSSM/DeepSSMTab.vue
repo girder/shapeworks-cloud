@@ -1,9 +1,9 @@
 <script lang="ts">
 import { allSubjectsForDataset } from '@/store';
-import { defineComponent, ref } from '@vue/composition-api';
+import { ref } from 'vue';
 
 
-export default defineComponent({
+export default {
     components: {
         
     },
@@ -52,7 +52,7 @@ export default defineComponent({
             samplerType,
         }
     },
-})
+}
 </script>
 
 <template>

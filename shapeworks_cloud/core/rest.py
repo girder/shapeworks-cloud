@@ -20,8 +20,6 @@ from rest_framework.viewsets import GenericViewSet
 from . import filters, models, serializers
 from .tasks import analyze, groom, optimize
 
-import DeepSSMUtils
-
 DB_WRITE_ACCESS_LOG_FILE = Path(gettempdir(), 'logging', 'db_write_access.log')
 if not os.path.exists(DB_WRITE_ACCESS_LOG_FILE.parent):
     os.mkdir(DB_WRITE_ACCESS_LOG_FILE.parent)
