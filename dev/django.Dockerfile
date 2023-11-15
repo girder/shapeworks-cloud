@@ -6,6 +6,7 @@ RUN apt-get update && \
     libpq-dev gcc libc6-dev curl unzip \
     libgl1-mesa-glx libxt6 libglib2.0-0 \
     libqt5core5a \
+    libxrender1 \
     && \
     rm -rf /var/lib/apt/lists/*
 
@@ -44,10 +45,6 @@ RUN mkdir /opt/shapeworks && \
 SHELL ["conda", "run", "/bin/bash", "-c"]
 RUN cd /opt/shapeworks ; ls ; source install_shapeworks.sh ; conda clean -t -y
 SHELL ["conda", "run", "-n", "shapeworks", "bin/bash", "-c"]
-
-# ensure that DeepSSMUtils is loaded
-COPY /shapeworks_cloud/test.py ./
-RUN python ./test.py
 
 ENV PATH $PATH:/opt/shapeworks/bin
 ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:/opt/shapeworks/lib
