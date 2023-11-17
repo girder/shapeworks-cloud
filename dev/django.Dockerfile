@@ -1,4 +1,4 @@
-FROM python:3.8-slim
+FROM python:3.9-slim
 # Install system librarires for Python packages:
 # * psycopg2
 RUN apt-get update && \
@@ -45,6 +45,9 @@ RUN mkdir /opt/shapeworks && \
 SHELL ["conda", "run", "/bin/bash", "-c"]
 RUN cd /opt/shapeworks ; ls ; source install_shapeworks.sh ; conda clean -t -y
 SHELL ["conda", "run", "-n", "shapeworks", "bin/bash", "-c"]
+
+COPY ./shapeworks_cloud/test_deepssm_install.py /opt/test_deepssm_install.py
+RUN python /opt/test_deepssm_install.py
 
 ENV PATH $PATH:/opt/shapeworks/bin
 ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:/opt/shapeworks/lib
