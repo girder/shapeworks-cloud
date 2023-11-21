@@ -37,6 +37,9 @@ import {
     abortTask,
     analyzeProject,
     deleteTaskProgress,
+    deepssmAugmentProject,
+    deepssmTestProject,
+    deepssmTrainProject,
     getDataset,
     getDatasets,
     getGroomedShapeForDataObject, getOptimizedParticlesForDataObject,
@@ -191,6 +194,12 @@ export async function spawnJob(action: string, payload: Record<string, any>): Pr
                 (l) => l !== 'Reconstructed'
             )
             return (await analyzeProject(projectId, payload as AnalysisParams))?.data
+        case 'deepssm_augment':
+            return (await deepssmAugmentProject(projectId))?.data
+        case 'deepssm_train':
+            return (await deepssmTrainProject(projectId))?.data
+        case 'deepssm_test':
+            return (await deepssmTestProject(projectId))?.data
         default:
             break;
     }

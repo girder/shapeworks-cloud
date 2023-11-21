@@ -18,7 +18,7 @@ from rest_framework.views import APIView
 from rest_framework.viewsets import GenericViewSet
 
 from . import filters, models, serializers
-from .tasks import analyze, groom, optimize
+from .tasks import analyze, deepssm_augment, deepssm_test, deepssm_train, groom, optimize
 
 DB_WRITE_ACCESS_LOG_FILE = Path(gettempdir(), 'logging', 'db_write_access.log')
 if not os.path.exists(DB_WRITE_ACCESS_LOG_FILE.parent):
@@ -368,33 +368,6 @@ class ProjectViewSet(BaseViewSet):
 
     @action(
         detail=True,
-        url_path='augment',
-        url_name='augment',
-        methods=['POST'],
-    )
-    def augment(self, request, **kwargs):
-        return None
-
-    @action(
-        detail=True,
-        url_path='train',
-        url_name='train',
-        methods=['POST'],
-    )
-    def train(self, request, **kwargs):
-        return None
-
-    @action(
-        detail=True,
-        url_path='deepssm_test',
-        url_name='deepssm_test',
-        methods=['POST'],
-    )
-    def deepssm_test(self, request, **kwargs):
-        return None
-
-    @action(
-        detail=True,
         url_path='analyze',
         url_name='analyze',
         methods=['POST'],
@@ -436,6 +409,44 @@ class ProjectViewSet(BaseViewSet):
             status=status.HTTP_200_OK,
         )
         pass
+
+    @action(
+        detail=True,
+        url_path='deepssm-augment',
+        url_name='deepssm-augment',
+        methods=['POST'],
+    )
+    def deepssm_augment(self, request, **kwargs):
+        project = self.get_object()
+
+        deepssm_augment.delay(request.user.id, project.id)
+        return Response(
+            status=status.HTTP_200_OK,
+        )
+
+    @action(
+        detail=True,
+        url_path='deepssm-train',
+        url_name='deepssm-train',
+        methods=['POST'],
+    )
+    def deepssm_train(self, request, **kwargs):
+        project = self.get_object()
+
+        deepssm_train.delay(request.user.id, project.id)
+        return None
+
+    @action(
+        detail=True,
+        url_path='deepssm-test',
+        url_name='deepssm-test',
+        methods=['POST'],
+    )
+    def deepssm_test(self, request, **kwargs):
+        project = self.get_object()
+
+        deepssm_test.delay(request.user.id, project.id)
+        return None
 
 
 class GroomedSegmentationViewSet(BaseViewSet):

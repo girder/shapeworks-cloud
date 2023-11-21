@@ -18,6 +18,9 @@ from swcc.models import Project as SWCCProject
 from swcc.models.constants import expected_key_prefixes
 from swcc.models.project import ProjectFileIO
 
+import DeepSSMUtils
+import DataAugmentationUtils
+
 
 def parse_progress(xml_string):
     match = re.search('(?<=<progress>)(.*)(?=</progress>)', xml_string)
@@ -144,6 +147,17 @@ def run_shapeworks_command(
                 result_data = json.load(f)
             post_command_function(project, download_dir, result_data, project_filename)
             progress.update_percentage(100)
+
+
+def run_deepssm_command(
+    user_id,
+    project_id,
+    form_data,
+    command,
+    pre_command_function,
+    post_command_function,
+):
+    return None
 
 
 @shared_task
@@ -347,4 +361,78 @@ def analyze(user_id, project_id, progress_id, args: List[str]):
         post_command_function,
         progress_id,
         args,
+    )
+
+
+# DeepSSM tasks, Augmentation, Training, Testing
+# TODO: Implement these tasks
+# "Command" here is not a shapeworks executable command, but rather a DeepSSM process
+# is it good practice to make a similar function to run_shapeworks_command like run_deepssm_command?
+# other option is to use the run_shapeworks_command existing function and pass in the deepssm_task
+#   and let it handle the distinction between shapeworks and deepssm tasks
+@shared_task
+def deepssm_augment(user_id, project_id, form_data):
+    def pre_command_function():
+        # delete any previous results
+        # Augmented data is provided in an output file
+        print("Pre command function")
+
+    def post_command_function():
+        # any cleanup or post process file-storage
+        print("Post command function")
+
+    print(dir(DataAugmentationUtils))
+    
+    run_deepssm_command(
+        user_id,
+        project_id,
+        form_data,
+        'augment',
+        pre_command_function,
+        post_command_function
+    )
+
+
+@shared_task
+def deepssm_train(user_id, project_id, form_data):
+    def pre_command_function():
+        # delete any previous results
+        # Augmented data is provided in an output file
+        print("Pre command function")
+
+    def post_command_function():
+        # any cleanup or post process file-storage
+        print("Post command function")
+
+    print(dir(DeepSSMUtils))
+
+    run_deepssm_command(
+        user_id,
+        project_id,
+        form_data,
+        'train',
+        pre_command_function,
+        post_command_function
+    )
+
+@shared_task
+def deepssm_test(user_id, project_id, form_data):
+    def pre_command_function():
+        # delete any previous results
+        # Augmented data is provided in an output file
+        print("Pre command function")
+
+    def post_command_function():
+        # any cleanup or post process file-storage
+        print("Post command function")
+
+    print(dir(DeepSSMUtils))
+
+    run_deepssm_command(
+        user_id,
+        project_id,
+        form_data,
+        'test',
+        pre_command_function,
+        post_command_function
     )

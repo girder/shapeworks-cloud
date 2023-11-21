@@ -143,6 +143,18 @@ export async function analyzeProject(projectId: number, params: AnalysisParams){
     return (await apiClient.post(`/projects/${projectId}/analyze/`, params))
 }
 
+export async function deepssmAugmentProject(projectId: number) {
+    return (await apiClient.post(`/projects/${projectId}/deepssmm-augment/`))
+}
+
+export async function deepssmTrainProject(projectId: number) {
+    return (await apiClient.post(`/projects/${projectId}/deepssmm-train/`))
+}
+
+export async function deepssmTestProject(projectId: number) {
+    return (await apiClient.post(`/projects/${projectId}/deepssmm-test/`))
+}
+
 export async function getTaskProgress(taskId: number){
     return (await apiClient.get(`/task-progress/${taskId}`)).data
 }

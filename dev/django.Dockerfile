@@ -1,4 +1,4 @@
-FROM python:3.9-slim
+FROM python:3.8
 # Install system librarires for Python packages:
 # * psycopg2
 RUN apt-get update && \
@@ -13,16 +13,6 @@ RUN apt-get update && \
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
 
-# Only copy the setup.py, it will still force all install_requires to be installed,
-# but find_packages() will find nothing (which is fine). When Docker Compose mounts the real source
-# over top of this directory, the .egg-link in site-packages resolves to the mounted directory
-# and all package modules are importable.
-COPY ./setup.py /opt/django-project/setup.py
-COPY ./swcc/setup.py /opt/django-project/swcc/setup.py
-RUN pip install -U pip && \
-    pip install --editable /opt/django-project[dev] && \
-    pip install --editable /opt/django-project/swcc
-
 # install_shapeworks.sh for DeepSSM python api. This must be run from within a conda environment
 # install conda
 ENV PATH=/opt/conda/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
@@ -34,6 +24,16 @@ RUN curl https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -
     && conda install pip \
     && echo ". /opt/conda/etc/profile.d/conda.sh" >> ~/.bashrc \
     && echo "conda activate base" >> ~/.bashrc
+
+# Only copy the setup.py, it will still force all install_requires to be installed,
+# but find_packages() will find nothing (which is fine). When Docker Compose mounts the real source
+# over top of this directory, the .egg-link in site-packages resolves to the mounted directory
+# and all package modules are importable.
+COPY ./setup.py /opt/django-project/setup.py
+COPY ./swcc/setup.py /opt/django-project/swcc/setup.py
+RUN pip install -U pip && \
+    pip install --editable /opt/django-project[dev] && \
+    pip install --editable /opt/django-project/swcc
 
 RUN export url=$(curl -s https://api.github.com/repos/SCIInstitute/ShapeWorks/releases | grep -o "http.*dev-linux.*.gz"); \
     curl -L -o /tmp/shapeworks.tgz $url

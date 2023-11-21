@@ -1,4 +1,5 @@
 <script lang="ts">
+/* eslint-disable no-unused-vars */
 import { allSubjectsForDataset } from '@/store';
 import { ref } from 'vue';
 
@@ -22,6 +23,7 @@ export default {
             numDimensions: ref<number>(3),
             variablity: ref<number>(95),
         }
+        
         // Training
         const trainingData = {
             epochs: ref<number>(2),
