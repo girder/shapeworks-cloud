@@ -29,11 +29,6 @@ RUN curl https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -
 # but find_packages() will find nothing (which is fine). When Docker Compose mounts the real source
 # over top of this directory, the .egg-link in site-packages resolves to the mounted directory
 # and all package modules are importable.
-COPY ./setup.py /opt/django-project/setup.py
-COPY ./swcc/setup.py /opt/django-project/swcc/setup.py
-RUN pip install -U pip && \
-    pip install --editable /opt/django-project[dev] && \
-    pip install --editable /opt/django-project/swcc
 
 RUN export url=$(curl -s https://api.github.com/repos/SCIInstitute/ShapeWorks/releases | grep -o "http.*dev-linux.*.gz"); \
     curl -L -o /tmp/shapeworks.tgz $url
@@ -41,13 +36,20 @@ RUN mkdir /opt/shapeworks && \
     tar -zxvf /tmp/shapeworks.tgz -C /opt/shapeworks --strip-components 1 && \
     rm /tmp/shapeworks.tgz
 
+COPY ./setup.py /opt/django-project/setup.py
+COPY ./swcc/setup.py /opt/django-project/swcc/setup.py
+
 # Run install_shapeworks.sh
 SHELL ["conda", "run", "/bin/bash", "-c"]
 RUN cd /opt/shapeworks ; ls ; source install_shapeworks.sh ; conda clean -t -y
 SHELL ["conda", "run", "-n", "shapeworks", "bin/bash", "-c"]
 
-COPY ./shapeworks_cloud/test_deepssm_install.py /opt/test_deepssm_install.py
-RUN python /opt/test_deepssm_install.py
+RUN pip install -U pip && \
+    pip install --editable /opt/django-project[dev] && \
+    pip install --editable /opt/django-project/swcc
+
+# COPY ./shapeworks_cloud/test_deepssm_install.py /opt/test_deepssm_install.py
+# RUN python /opt/test_deepssm_install.py
 
 ENV PATH $PATH:/opt/shapeworks/bin
 ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:/opt/shapeworks/lib

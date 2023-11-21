@@ -195,11 +195,11 @@ export async function spawnJob(action: string, payload: Record<string, any>): Pr
             )
             return (await analyzeProject(projectId, payload as AnalysisParams))?.data
         case 'deepssm_augment':
-            return (await deepssmAugmentProject(projectId))?.data
+            return (await deepssmAugmentProject(projectId, payload))?.data
         case 'deepssm_train':
-            return (await deepssmTrainProject(projectId))?.data
+            return (await deepssmTrainProject(projectId, payload))?.data
         case 'deepssm_test':
-            return (await deepssmTestProject(projectId))?.data
+            return (await deepssmTestProject(projectId, payload))?.data
         default:
             break;
     }

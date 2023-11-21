@@ -1,6 +1,6 @@
 <script lang="ts">
 /* eslint-disable no-unused-vars */
-import { allSubjectsForDataset } from '@/store';
+import { allSubjectsForDataset, spawnJob } from '@/store';
 import { ref } from 'vue';
 
 
@@ -45,6 +45,27 @@ export default {
 
         console.log(allSubjectsForDataset);
 
+        async function submitAugmentation() {
+            console.log("submitting augmentation");
+            const res = await spawnJob("deepssm_augment", {});
+            console.log(res);
+            return res;
+        }
+
+        async function submitTraining() {
+            console.log("submitting training");
+            const res = await spawnJob("deepssm_train", {});
+            console.log(res);
+            return res;
+        }
+
+        async function submitTesting() {
+            console.log("submitting testing");
+            const res = await spawnJob("deepssm_test", {});
+            console.log(res);
+            return res;
+        }
+
         return {
             openTab,
             splitData,
@@ -52,6 +73,9 @@ export default {
             trainingData,
             Sampler,
             samplerType,
+            submitAugmentation,
+            submitTraining,
+            submitTesting,
         }
     },
 }
@@ -97,7 +121,7 @@ export default {
                         v-model="samplerType"
                         label="Sampler Type"
                     />
-
+                    <button @click="submitAugmentation">Submit</button>
                     <!-- needs sub-panel for data -->
                 </v-expansion-panel-content>
             </v-expansion-panel>
@@ -116,7 +140,8 @@ export default {
 
                     <v-text-field v-model="trainingData.ftEpochs" type="number" label="Fine Tuning Epochs" min="1" />
                     <v-text-field v-model="trainingData.ftLearningRate" type="number" label="Fine Tuning Learning Rate" min="0" />
-                    
+
+                    <button @click="submitTraining">Submit</button>
                     <!-- TODO: needs sub-panel for training output -->
                     <!-- needs data table with "Original Data" and "Generated Data" options -->
                     <!-- also needs violin plot to compare original and generated data -->
@@ -128,6 +153,7 @@ export default {
                 </v-expansion-panel-header>
                 <v-expansion-panel-content>
                     <!-- Data table for name and average distance -->
+                    <button @click="submitTesting">Submit</button>
                 </v-expansion-panel-content>
             </v-expansion-panel>
         </v-expansion-panels>

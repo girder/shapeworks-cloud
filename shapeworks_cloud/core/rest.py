@@ -418,8 +418,10 @@ class ProjectViewSet(BaseViewSet):
     )
     def deepssm_augment(self, request, **kwargs):
         project = self.get_object()
+        form_data = request.data
+        form_data = {k: str(v) for k, v in form_data.items()}
 
-        deepssm_augment.delay(request.user.id, project.id)
+        deepssm_augment.delay(request.user.id, project.id, form_data)
         return Response(
             status=status.HTTP_200_OK,
         )
@@ -432,9 +434,13 @@ class ProjectViewSet(BaseViewSet):
     )
     def deepssm_train(self, request, **kwargs):
         project = self.get_object()
+        form_data = request.data
+        form_data = {k: str(v) for k, v in form_data.items()}
 
-        deepssm_train.delay(request.user.id, project.id)
-        return None
+        deepssm_train.delay(request.user.id, project.id, form_data)
+        return Response(
+            status=status.HTTP_200_OK,
+        )
 
     @action(
         detail=True,
@@ -444,9 +450,13 @@ class ProjectViewSet(BaseViewSet):
     )
     def deepssm_test(self, request, **kwargs):
         project = self.get_object()
+        form_data = request.data
+        form_data = {k: str(v) for k, v in form_data.items()}
 
-        deepssm_test.delay(request.user.id, project.id)
-        return None
+        deepssm_test.delay(request.user.id, project.id, form_data)
+        return Response(
+            status=status.HTTP_200_OK,
+        )
 
 
 class GroomedSegmentationViewSet(BaseViewSet):

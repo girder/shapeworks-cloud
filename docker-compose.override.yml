@@ -4,7 +4,16 @@ services:
     build:
       context: .
       dockerfile: ./dev/django.Dockerfile
-    command: [ "./manage.py", "runserver", "0.0.0.0:8000" ]
+    command: [
+      "conda",
+      "run",
+      "--no-capture-output",
+      "-n",
+      "shapeworks",
+      "./manage.py", 
+      "runserver", 
+      "0.0.0.0:8000"
+    ]
     # Log printing via Rich is enhanced by a TTY
     tty: true
     env_file: ./dev/.env.docker-compose
@@ -24,6 +33,11 @@ services:
       dockerfile: ./dev/django.Dockerfile
     command:
       [
+        "conda",
+        "run",
+        "--no-capture-output",
+        "-n",
+        "shapeworks",
         "celery",
         "--app",
         "shapeworks_cloud.celery",
