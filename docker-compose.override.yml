@@ -60,7 +60,11 @@ services:
 
   yarn:
     image: node:lts
-    command: [ "/bin/bash", "-c", "yarn install && yarn serve" ]
+    command: [ 
+      "/bin/bash",
+      "-c",
+      "yarn install && yarn serve"
+    ]
     env_file: ./dev/yarn.env
     environment:
       - NODE_OPTIONS=--openssl-legacy-provider
