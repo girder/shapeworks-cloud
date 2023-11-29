@@ -48,9 +48,6 @@ RUN pip install -U pip && \
     pip install --editable /opt/django-project[dev] && \
     pip install --editable /opt/django-project/swcc
 
-# COPY ./shapeworks_cloud/test_deepssm_install.py /opt/test_deepssm_install.py
-# RUN python /opt/test_deepssm_install.py
-
 ENV PATH $PATH:/opt/shapeworks/bin
 ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:/opt/shapeworks/lib
 

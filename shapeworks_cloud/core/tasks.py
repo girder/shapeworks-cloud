@@ -13,6 +13,7 @@ from django.db.models import Q
 from rest_framework.authtoken.models import Token
 
 from shapeworks_cloud.core import models
+from shapeworks_cloud.core.deepssm_util import DeepSSMFileType, DeepSSMSplitType, get_list
 from swcc.api import swcc_session
 from swcc.models import Project as SWCCProject
 from swcc.models.constants import expected_key_prefixes
@@ -156,8 +157,73 @@ def run_deepssm_command(
     command,
     pre_command_function,
     post_command_function,
+    progress_id,
 ):
-    return None
+    user = User.objects.get(id=user_id)
+    progress = models.TaskProgress.objects.get(id=progress_id)
+    token, _created = Token.objects.get_or_create(user=user)
+    base_url = settings.API_URL
+
+    with TemporaryDirectory() as download_dir:
+        with swcc_session(base_url=base_url) as session:
+            # fetch everything we need
+            session.set_token(token.key)
+            project = models.Project.objects.get(id=project_id)
+            project_filename = project.file.name.split('/')[-1]
+            swcc_project = SWCCProject.from_id(project.id)
+            swcc_project.download(download_dir)
+
+            pre_command_function()
+            progress.update_percentage(10)
+
+            if form_data:
+                # write the form data to the project file
+                form_data = interpret_form_data(form_data, command, swcc_project)
+                edit_swproj_section(
+                    Path(download_dir, project_filename),
+                    command,
+                    form_data,
+                )
+
+            result_data = {}
+
+            # perform deepssm tasks
+            if command == 'augment':
+                    # get training image list
+                train_image_list = get_list(DeepSSMFileType.IMAGE, DeepSSMSplitType.TRAIN)
+                # get training particle list
+                train_particle_list = get_list(DeepSSMFileType.PARTICLE, DeepSSMSplitType.TRAIN)
+
+                # get augmentation parameters as object
+                # TODO: fix this to not be needed (interpret_form_data should handle this)
+                num_samples, num_dimensions, variability, sampler_type = form_data.values()
+                print(num_samples, num_dimensions, variability, sampler_type)
+                # set augmentation directory (where the augmentaton output will be stored)
+                # make sure this is accessible (might need to add field to the project model)
+                aug_dir = 'deepssm/Augmentation/'
+                # run augmentation via (runDataAugmentation)
+                #  takes aug_dir, train_image_list, train_particle_list, num_samples, num_dims, percent_variability, sampler_type, mixture_num (0), thread_count
+                result_data['aug_dims'] = DataAugmentationUtils.runDataAugmentation(
+                    aug_dir,
+                    train_image_list,
+                    train_particle_list,
+                    num_samples,
+                    num_dimensions,
+                    variability,
+                    sampler_type,
+                    0,
+                    1,
+                )
+
+                # visualize the augmentation results
+                DataAugmentationUtils.visualizeAugmentation(aug_dir + "TotalData.csv", "violin", False)
+            elif command == 'train':
+                pass
+            elif command == 'test':
+                pass
+
+            post_command_function(project, download_dir, result_data, project_filename)
+            progress.update_percentage(100)
 
 
 @shared_task
@@ -364,29 +430,21 @@ def analyze(user_id, project_id, progress_id, args: List[str]):
     )
 
 
-print("ARE YOU READING ME? ******************************")
-
-
 # DeepSSM tasks, Augmentation, Training, Testing
-# TODO: Implement these tasks
-# "Command" here is not a shapeworks executable command, but rather a DeepSSM process
-# is it good practice to make a similar function to run_shapeworks_command like run_deepssm_command?
-# other option is to use the run_shapeworks_command existing function and pass in the deepssm_task
-#   and let it handle the distinction between shapeworks and deepssm tasks
+# TODO: Implement these tasksß
 @shared_task
-def deepssm_augment(user_id, project_id, form_data):
-    print("test :D")
-
+def deepssm_augment(user_id, project_id, progress_id, form_data):
     def pre_command_function():
         # delete any previous results
-        # Augmented data is provided in an output file
-        print("Pre command function")
+        pass
 
-    def post_command_function():
-        # any cleanup or post process file-storage
-        print("Post command function")
-
-    print(dir(DataAugmentationUtils))
+    def post_command_function(project, download_dir, result_data, project_filename):
+        print(result_data)
+        # save project file changes to database
+        project.file.save(
+            project_filename,
+            open(Path(download_dir, project_filename), 'rb'),
+        )
 
     run_deepssm_command(
         user_id,
@@ -394,50 +452,56 @@ def deepssm_augment(user_id, project_id, form_data):
         form_data,
         'augment',
         pre_command_function,
-        post_command_function
+        post_command_function,
+        progress_id
     )
 
 
 @shared_task
-def deepssm_train(user_id, project_id, form_data):
+def deepssm_train(user_id, project_id, progress_id, form_data):
     def pre_command_function():
         # delete any previous results
-        # Augmented data is provided in an output file
-        print("Pre command function")
+        pass
 
-    def post_command_function():
-        # any cleanup or post process file-storage
-        print("Post command function")
-
-    print(dir(DeepSSMUtils))
+    def post_command_function(project, download_dir, result_data, project_filename):
+        print(result_data)
+        # save project file changes to database
+        project.file.save(
+            project_filename,
+            open(Path(download_dir, project_filename), 'rb'),
+        )
 
     run_deepssm_command(
         user_id,
         project_id,
         form_data,
-        'train',
+        'training',
         pre_command_function,
-        post_command_function
+        post_command_function,
+        progress_id
     )
 
+
 @shared_task
-def deepssm_test(user_id, project_id, form_data):
+def deepssm_test(user_id, project_id, progress_id, form_data):
     def pre_command_function():
         # delete any previous results
-        # Augmented data is provided in an output file
-        print("Pre command function")
+        pass
 
-    def post_command_function():
-        # any cleanup or post process file-storage
-        print("Post command function")
-
-    print(dir(DeepSSMUtils))
+    def post_command_function(project, download_dir, result_data, project_filename):
+        print(result_data)
+        # save project file changes to database
+        project.file.save(
+            project_filename,
+            open(Path(download_dir, project_filename), 'rb'),
+        )
 
     run_deepssm_command(
         user_id,
         project_id,
         form_data,
-        'test',
+        'testing',
         pre_command_function,
-        post_command_function
+        post_command_function,
+        progress_id
     )

@@ -1,7 +1,7 @@
 <script lang="ts">
 /* eslint-disable no-unused-vars */
 import { allSubjectsForDataset, spawnJob } from '@/store';
-import { ref } from 'vue';
+import { Ref, ref } from 'vue';
 
 
 export default {
@@ -9,6 +9,12 @@ export default {
         
     },
     setup() {
+        enum Sampler {
+            Gaussian = "Gaussian",
+            Mixture = "Mixture",
+            KDE = "KDE",
+        }
+
         const openTab = ref<number>(0);
 
         // Split
@@ -16,12 +22,14 @@ export default {
             testSplit: ref<number>(20),
             validationSplit: ref<number>(20),
         }
-
+        
         // Augmentation
         const augmentationData = {
             numSamples: ref<number>(3),
             numDimensions: ref<number>(3),
             variablity: ref<number>(95),
+            samplerType : ref<Sampler>(Sampler.Gaussian),
+        
         }
         
         // Training
@@ -35,26 +43,35 @@ export default {
             ftLearningRate: ref<number>(0.001),
         }
 
-        enum Sampler {
-            Gaussian = "Gaussian",
-            Mixture = "Mixture",
-            KDE = "KDE",
+        /**
+         * Converts an object of reactive properties to a plain object for use in api formData fields.
+         * 
+         * @param {Object} object - The object containing reactive properties.
+         * @returns {Object} - The plain object with the same key-value pairs as the input object.
+         */
+        function getFormData(object: {[key: string]: Ref<any>}) {
+            return (
+                Object.entries(object)
+                    .map(([key, value]) => [key, value.value])
+                    .reduce((obj, [key, value]) => {
+                        obj[key] = value;
+                        return obj;
+                    }, {} as any)
+            )
         }
-
-        const samplerType = ref<Sampler>(Sampler.Gaussian);
-
-        console.log(allSubjectsForDataset);
 
         async function submitAugmentation() {
             console.log("submitting augmentation");
-            const res = await spawnJob("deepssm_augment", {});
+            const augFormData = getFormData(augmentationData);
+            const res = await spawnJob("deepssm_augment", augFormData);
             console.log(res);
             return res;
         }
 
         async function submitTraining() {
             console.log("submitting training");
-            const res = await spawnJob("deepssm_train", {});
+            const trainingFormData = getFormData(trainingData);
+            const res = await spawnJob("deepssm_train", trainingFormData);
             console.log(res);
             return res;
         }
@@ -72,7 +89,6 @@ export default {
             augmentationData,
             trainingData,
             Sampler,
-            samplerType,
             submitAugmentation,
             submitTraining,
             submitTesting,
@@ -118,7 +134,7 @@ export default {
 
                     <v-select 
                         :items="Object.values(Sampler)"
-                        v-model="samplerType"
+                        v-model="augmentationData.samplerType"
                         label="Sampler Type"
                     />
                     <button @click="submitAugmentation">Submit</button>
