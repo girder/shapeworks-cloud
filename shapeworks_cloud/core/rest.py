@@ -421,7 +421,16 @@ class ProjectViewSet(BaseViewSet):
         form_data = request.data
         form_data = {k: str(v) for k, v in form_data.items()}
 
-        deepssm_augment.delay(request.user.id, project.id, form_data)
+        augment_progress = models.TaskProgress.objects.create(name='augment', project=project)
+
+        log_write_access(
+            timezone.now(),
+            self.request.user.username,
+            'Analyze Project',
+            project.id,
+        )
+
+        deepssm_augment.delay(request.user.id, project.id, augment_progress.id, form_data)
         return Response(
             status=status.HTTP_200_OK,
         )
@@ -437,7 +446,16 @@ class ProjectViewSet(BaseViewSet):
         form_data = request.data
         form_data = {k: str(v) for k, v in form_data.items()}
 
-        deepssm_train.delay(request.user.id, project.id, form_data)
+        train_progress = models.TaskProgress.objects.create(name='train', project=project)
+
+        log_write_access(
+            timezone.now(),
+            self.request.user.username,
+            'Analyze Project',
+            project.id,
+        )
+
+        deepssm_train.delay(request.user.id, project.id, train_progress.id, form_data)
         return Response(
             status=status.HTTP_200_OK,
         )
@@ -453,7 +471,16 @@ class ProjectViewSet(BaseViewSet):
         form_data = request.data
         form_data = {k: str(v) for k, v in form_data.items()}
 
-        deepssm_test.delay(request.user.id, project.id, form_data)
+        testing_progress = models.TaskProgress.objects.create(name='testing', project=project)
+
+        log_write_access(
+            timezone.now(),
+            self.request.user.username,
+            'Analyze Project',
+            project.id,
+        )
+
+        deepssm_test.delay(request.user.id, project.id, testing_progress.id, form_data)
         return Response(
             status=status.HTTP_200_OK,
         )

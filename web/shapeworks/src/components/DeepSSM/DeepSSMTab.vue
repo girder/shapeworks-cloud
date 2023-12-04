@@ -19,6 +19,7 @@ export default {
 
         // Split
         const splitData = {
+            trainSplit: ref<number>(60),
             testSplit: ref<number>(20),
             validationSplit: ref<number>(20),
         }
@@ -61,26 +62,27 @@ export default {
         }
 
         async function submitAugmentation() {
-            console.log("submitting augmentation");
             const augFormData = getFormData(augmentationData);
-            const res = await spawnJob("deepssm_augment", augFormData);
-            console.log(res);
-            return res;
+            const splitFormData = getFormData(splitData);
+            const formData = {
+                ...augFormData,
+                ...splitFormData
+            }
+            return await spawnJob("deepssm_augment", formData);
         }
 
         async function submitTraining() {
-            console.log("submitting training");
             const trainingFormData = getFormData(trainingData);
-            const res = await spawnJob("deepssm_train", trainingFormData);
-            console.log(res);
-            return res;
+            const splitFormData = getFormData(splitData);
+            const formData = {
+                ...trainingFormData,
+                ...splitFormData
+            }
+            return await spawnJob("deepssm_train", formData);
         }
 
         async function submitTesting() {
-            console.log("submitting testing");
-            const res = await spawnJob("deepssm_test", {});
-            console.log(res);
-            return res;
+            return await spawnJob("deepssm_test", {});
         }
 
         return {

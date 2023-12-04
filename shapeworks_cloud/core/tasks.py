@@ -178,6 +178,7 @@ def run_deepssm_command(
 
             if form_data:
                 # write the form data to the project file
+                # TODO: implement interpret_form_data for deepssm forms
                 form_data = interpret_form_data(form_data, command, swcc_project)
                 edit_swproj_section(
                     Path(download_dir, project_filename),
@@ -189,20 +190,21 @@ def run_deepssm_command(
 
             # perform deepssm tasks
             if command == 'augment':
-                    # get training image list
-                train_image_list = get_list(DeepSSMFileType.IMAGE, DeepSSMSplitType.TRAIN)
+                # get training image list
+                train_image_list = get_list(swcc_project, DeepSSMFileType.IMAGE, DeepSSMSplitType.TRAIN)
                 # get training particle list
-                train_particle_list = get_list(DeepSSMFileType.PARTICLE, DeepSSMSplitType.TRAIN)
+                train_particle_list = get_list(swcc_project, DeepSSMFileType.PARTICLE, DeepSSMSplitType.TRAIN)
 
                 # get augmentation parameters as object
                 # TODO: fix this to not be needed (interpret_form_data should handle this)
                 num_samples, num_dimensions, variability, sampler_type = form_data.values()
-                print(num_samples, num_dimensions, variability, sampler_type)
                 # set augmentation directory (where the augmentaton output will be stored)
                 # make sure this is accessible (might need to add field to the project model)
-                aug_dir = 'deepssm/Augmentation/'
+                # TotalData.csv should be saved to a project object
+                aug_dir = download_dir + '/Augmentation/'
+                total_data = aug_dir + 'TotalData.csv'
                 # run augmentation via (runDataAugmentation)
-                #  takes aug_dir, train_image_list, train_particle_list, num_samples, num_dims, percent_variability, sampler_type, mixture_num (0), thread_count
+                result_data['total_data'] = total_data
                 result_data['aug_dims'] = DataAugmentationUtils.runDataAugmentation(
                     aug_dir,
                     train_image_list,
@@ -218,9 +220,70 @@ def run_deepssm_command(
                 # visualize the augmentation results
                 DataAugmentationUtils.visualizeAugmentation(aug_dir + "TotalData.csv", "violin", False)
             elif command == 'train':
-                pass
+                # get lists of training images, training particles, and testing images
+                train_image_list = get_list(swcc_project, DeepSSMFileType.IMAGE, DeepSSMSplitType.TRAIN)
+                train_particle_list = get_list(swcc_project, DeepSSMFileType.PARTICLE, DeepSSMSplitType.TRAIN)
+                test_image_list = get_list(swcc_project, DeepSSMFileType.IMAGE, DeepSSMSplitType.TEST)
+
+                # set directories
+                out_dir = download_dir + '/deepssm/'
+                down_dir = out_dir + 'DownsampledImages/'
+                loader_dir = out_dir + 'TorchDataLoaders/'
+
+                total_data = ''  # TODO: pull totaldata.csv file from s3 or project? ensure this is a directory with Path() or similar
+
+                # get parameters
+                epochs, learning_rate, batch_size, decay_lr, fine_tune, fine_tune_epochs, fine_tune_learning_rate, num_dims = form_data.values()
+                train_split = form_data['train_split']
+
+                # downsample to 75% of original resolution
+                downsample_factor = 0.75
+
+                # get train/validation loaders
+                DeepSSMUtils.getTrainValLoaders(
+                    loader_dir,
+                    total_data,
+                    batch_size,
+                    downsample_factor,
+                    down_dir,
+                    train_split,
+                )
+
+                # get test loader
+                DeepSSMUtils.getTestLoader(
+                    loader_dir,
+                    test_image_list,
+                    downsample_factor,
+                    down_dir
+                )
+
+                # prepare config file
+                config_dir = out_dir + 'configuration.json'
+                DeepSSMUtils.prepareConfigFile(
+                    config_dir,
+                    "model",
+                    num_dims,
+                    out_dir,
+                    loader_dir,
+                    aug_dir,
+                    epochs,
+                    learning_rate,
+                    decay_lr,
+                    fine_tune,
+                    fine_tune_epochs,
+                    fine_tune_learning_rate
+                )
+
+                # run training with config file
+                DeepSSMUtils.trainDeepSSM(config_dir)
+
             elif command == 'test':
-                pass
+                # get configuration file
+                # TODO: get config file from the model object (provide path)
+                config_dir = download_dir + '/deepssm/configuration.json'
+
+                # run testing with config file
+                DeepSSMUtils.testDeepSSM(config_dir)
 
             post_command_function(project, download_dir, result_data, project_filename)
             progress.update_percentage(100)
@@ -431,7 +494,7 @@ def analyze(user_id, project_id, progress_id, args: List[str]):
 
 
 # DeepSSM tasks, Augmentation, Training, Testing
-# TODO: Implement these tasksß
+# TODO: Implement these tasks
 @shared_task
 def deepssm_augment(user_id, project_id, progress_id, form_data):
     def pre_command_function():
