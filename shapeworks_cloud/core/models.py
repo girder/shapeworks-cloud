@@ -108,6 +108,72 @@ class CachedAnalysis(TimeStampedModel, models.Model):
     good_bad_angles = models.JSONField(default=list)
 
 
+class CachedPrediction(TimeStampedModel, models.Model):
+    particles = S3FileField()
+
+
+class CachedExamplePair(TimeStampedModel, models.Model):
+    particles = S3FileField()
+    scalars = S3FileField()
+
+
+class CachedExample(TimeStampedModel, models.Model):
+    train = models.ForeignKey(CachedExamplePair, on_delete=models.SET_NULL)
+    validation = models.ForeignKey(CachedExamplePair, on_delete=models.SET_NULL)
+
+
+class CachedModelExamples(TimeStampedModel, models.Model):
+    best = models.ForeignKey(CachedExample, on_delete=models.CASCADE)
+    median = models.ForeignKey(CachedExample, on_delete=models.CASCADE)
+    worst = models.ForeignKey(CachedExample, on_delete=models.CASCADE)
+
+
+class CachedFineTuning(TimeStampedModel, models.Model):
+    train_log_ft = S3FileField()
+    best_model_ft = S3FileField()
+    final_model_ft = S3FileField()
+
+
+class CachedModel(TimeStampedModel, models.Model):
+    configuration = S3FileField()  # this is a json file but we aren't reading it, only passing the path to DeepSSMUtils
+    best_model = S3FileField()
+    final_model = S3FileField()
+    examples = models.ForeignKey(CachedModelExamples, on_delete=models.CASCADE)
+    pca_predictions = models.ManyToManyField(CachedPrediction)
+    ft_predictions = models.ManyToManyField(CachedPrediction)
+    fine_tuning = models.ForeignKey(CachedFineTuning, on_delete=models.SET_NULL, null=True)
+
+
+class CachedTensors(TimeStampedModel, models.Model):
+    train = S3FileField()
+    validation = S3FileField()
+    test = S3FileField()
+
+
+class CachedDataLoaders(TimeStampedModel, models.Model):
+    mean_pca = S3FileField()
+    std_pca = S3FileField()
+    test_names = S3FileField()  # this is a .txt file but we only pass the path to DeepSSMUtils
+    tensors = models.ForeignKey(CachedTensors, on_delete=models.SET_NULL)
+
+
+class CachedAugmentationPair(TimeStampedModel, models.Model):
+    file = S3FileField()
+    particles = S3FileField()
+
+
+class CachedAugmentation(TimeStampedModel, models.Model):
+    pairs = models.ManyToManyField(CachedAugmentationPair)
+    total_data_csv = S3FileField()  # CSV file but we don't read, only pass to DeepSSMUtils
+    violin_plot = S3FileField()  # PNG file used for plot visualization
+
+
+class CachedDeepSSM(TimeStampedModel, models.Model):
+    augmentation = models.ForeignKey(CachedAugmentation, on_delete=models.CASCADE)
+    data_loaders = models.ForeignKey(CachedDataLoaders, on_delete=models.CASCADE)
+    model = models.ForeignKey(CachedModel, on_delete=models.CASCADE)
+
+
 class Project(TimeStampedModel, models.Model):
     file = S3FileField()
     name = models.CharField(max_length=255)
@@ -121,6 +187,11 @@ class Project(TimeStampedModel, models.Model):
     landmarks_info = models.JSONField(default=list, null=True)
     last_cached_analysis = models.ForeignKey(
         CachedAnalysis,
+        on_delete=models.SET_NULL,
+        null=True,
+    )
+    last_cached_deepssm = models.ForeignKey(
+        CachedDeepSSM,
         on_delete=models.SET_NULL,
         null=True,
     )
