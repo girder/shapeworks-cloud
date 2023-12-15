@@ -540,6 +540,71 @@ class CachedAnalysisMeanShapeViewSet(BaseViewSet):
     serializer_class = serializers.CachedAnalysisMeanShapeSerializer
 
 
+class CachedPredictionViewSet(BaseViewSet):
+    queryset = models.CachedPrediction.objects.all()
+    serializer_class = serializers.CachedPredictionSerializer
+
+
+class CachedExampleViewSet(BaseViewSet):
+    queryset = models.CachedExample.objects.all()
+    serializer_class = serializers.CachedExampleSerializer
+
+
+class CachedModelExamplesViewSet(BaseViewSet):
+    queryset = models.CachedModelExamples.objects.all()
+    serializer_class = serializers.CachedModelExamplesSerializer
+
+
+class CachedModelViewSet(BaseViewSet):
+    queryset = models.CachedModel.objects.all()
+
+    def get_serializer_class(self):
+        if self.request.method == 'GET':
+            return serializers.CachedModelReadSerializer
+        else:
+            return serializers.CachedModelSerializer
+
+
+class CachedTensorsViewSet(BaseViewSet):
+    queryset = models.CachedTensors.objects.all()
+    serializer_class = serializers.CachedTensorsSerializer
+
+
+class CachedDataLoadersViewSet(BaseViewSet):
+    queryset = models.CachedDataLoaders.objects.all()
+
+    def get_serializer_class(self):
+        if self.request.method == 'GET':
+            return serializers.CachedDataLoadersReadSerializer
+        else:
+            return serializers.CachedDataLoadersSerializer
+
+
+class CachedAugmentationPairViewSet(BaseViewSet):
+    queryset = models.CachedAugmentationPair.objects.all()
+    serializer_class = serializers.CachedAugmentationPairSerializer
+
+
+class CachedAugmentationViewSet(BaseViewSet):
+    queryset = models.CachedAugmentation.objects.all()
+
+    def get_serializer_class(self):
+        if self.request.method == 'GET':
+            return serializers.CachedAugmentationReadSerializer
+        else:
+            return serializers.CachedAugmentationModeSerializer
+
+
+class CachedDeepSSMViewSet(BaseViewSet):
+    queryset = models.CachedDeepSSM.objects.all()
+
+    def get_serializer_class(self):
+        if self.request.method == 'GET':
+            return serializers.CachedDeepSSMReadSerializer
+        else:
+            return serializers.CachedDeepSSMSerializer
+
+
 class ReconstructedSampleViewSet(
     GenericViewSet,
     mixins.ListModelMixin,
