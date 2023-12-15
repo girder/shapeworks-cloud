@@ -148,6 +148,83 @@ class CachedAnalysis(ApiModel):
     good_bad_angles: List[list]
 
 
+class CachedPrediction(ApiModel):
+    _endpoint = 'cached-prediction'
+
+    particles: Literal['core.CachedPrediction.particles']
+
+
+class CachedExample(ApiModel):
+    _endpoint = 'cached-example'
+
+    train_particles: Literal['core.CachedExample.train_particles']
+    train_scalars: Literal['core.CachedExample.train_scalars']
+    validation_particles: Literal['core.CachedExample.validation_particles']
+    validation_scalars: Literal['core.CachedExample.validation_scalars']
+
+
+class CachedModelExamples(ApiModel):
+    _endpoint = 'cached-model-examples'
+
+    best: CachedExample
+    median: CachedExample
+    worst: CachedExample
+
+
+class CachedModel(ApiModel):
+    _endpoint = 'cached-model'
+
+    configuration: Literal['core.CachedModel.configuration']
+    best_model: Literal['core.CachedModel.best_model']
+    final_model: Literal['core.CachedModel.final_model']
+    examples: CachedModelExamples
+    pca_predictions: List[CachedPrediction]
+    ft_predictions: List[CachedPrediction]
+    train_log_ft: Optional[Literal['core.CachedModel.train_log_ft']]
+    best_model_ft: Optional[Literal['core.CachedModel.best_model_ft']]
+    final_model_ft: Optional[Literal['core.CachedModel.final_model_ft']]
+
+
+class CachedTensors(ApiModel):
+    _endpoint = 'cached-tensors'
+
+    train: Literal['core.CachedTensors.train']
+    validation: Literal['core.CachedTensors.validation']
+    test: Literal['core.CachedTensors.test']
+
+
+class CachedDataLoaders(ApiModel):
+    _endpoint = 'cached-data-loaders'
+
+    mean_pca: Literal['core.CachedDataLoaders.mean_pca']
+    std_pca: Literal['core.CachedDataLoaders.std_pca']
+    test_names: Literal['core.CachedDataLoaders.test_names']
+    tensors: CachedTensors
+
+
+class CachedAugmentationPair(ApiModel):
+    _endpoint = 'cached-augmentation-pair'
+
+    file: Literal['core.CachedAugmentationPair.file']
+    particles: Literal['core.CachedAugmentationPair.particles']
+
+
+class CachedAugmentation(ApiModel):
+    _endpoint = 'cached-augmentation'
+
+    pairs: List[CachedAugmentationPair]
+    total_data_csv: Literal['core.CachedAugmentation.total_data_csv']
+    violin_plot: Literal['core.CachedAugmentation.violin_plot']
+
+
+class CachedDeepSSM(ApiModel):
+    _endpoint = 'cached-deep-ssm'
+
+    augmentation: CachedAugmentation
+    data_loaders: CachedDataLoaders
+    model: CachedModel
+
+
 from .project import Project  # noqa: E402
 from .subject import Subject  # noqa: E402
 
