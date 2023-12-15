@@ -42,6 +42,76 @@ class CachedAnalysisSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
+class CachedPredictionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.CachedPrediction
+        fields = '__all__'
+
+
+class CachedExampleSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.CachedExample
+        fields = '__all__'
+
+
+class CachedModelExamplesSerializer(serializers.ModelSerializer):
+    best = CachedExampleSerializer()
+    median = CachedExampleSerializer()
+    worst = CachedExampleSerializer()
+
+    class Meta:
+        model = models.CachedModelExamples
+        fields = '__all__'
+
+
+class CachedModelSerializer(serializers.ModelSerializer):
+    examples = CachedModelExamplesSerializer()
+    pca_predictions = CachedPredictionSerializer(many=True)
+    ft_predictions = CachedPredictionSerializer(many=True)
+
+    class Meta:
+        model = models.CachedModel
+        fields = '__all__'
+
+
+class CachedTensorsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.CachedTensors
+        fields = '__all__'
+
+
+class CachedDataLoadersSerializer(serializers.ModelSerializer):
+    tensors = CachedTensorsSerializer()
+
+    class Meta:
+        model = models.CachedDataLoaders
+        fields = '__all__'
+
+
+class CachedAugmentationPairSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.CachedAugmentationPair
+        fields = '__all__'
+
+
+class CachedAugmentationSerializer(serializers.ModelSerializer):
+    pairs = CachedAugmentationPairSerializer(many=True)
+
+    class Meta:
+        model = models.CachedAugmentation
+        fields = '__all__'
+
+
+class CachedDeepSSMSerializer(serializers.ModelSerializer):
+    augmentation = CachedAugmentationSerializer()
+    data_loaders = CachedDataLoadersSerializer()
+    model = CachedModelSerializer()
+
+    class Meta:
+        model = models.CachedDeepSSM
+        fields = '__all__'
+
+
 class ProjectSerializer(serializers.ModelSerializer):
     file = S3FileSerializerField(required=False)
 
