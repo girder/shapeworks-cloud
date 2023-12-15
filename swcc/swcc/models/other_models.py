@@ -221,8 +221,8 @@ class CachedDeepSSM(ApiModel):
     _endpoint = 'cached-deep-ssm'
 
     augmentation: CachedAugmentation
-    data_loaders: CachedDataLoaders
-    model: CachedModel
+    data_loaders: Optional[CachedDataLoaders]
+    model: Optional[CachedModel]
 
 
 from .project import Project  # noqa: E402

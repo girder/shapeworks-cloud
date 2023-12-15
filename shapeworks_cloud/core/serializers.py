@@ -134,8 +134,8 @@ class CachedAugmentationReadSerializer(serializers.ModelSerializer):
 
 class CachedDeepSSMReadSerializer(serializers.ModelSerializer):
     augmentation = CachedAugmentationSerializer()
-    data_loaders = CachedDataLoadersSerializer()
-    model = CachedModelSerializer()
+    data_loaders = CachedDataLoadersSerializer(allow_null=True)
+    model = CachedModelSerializer(allow_null=True)
 
     class Meta:
         model = models.CachedDeepSSM

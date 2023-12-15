@@ -47,57 +47,29 @@ router.register(
     basename='cached_analysis_mean_shape',
 )
 router.register(
-    'reconstructed-samples',
-    rest.ReconstructedSampleViewSet,
-    basename='reconstructed_sample'
+    'reconstructed-samples', rest.ReconstructedSampleViewSet, basename='reconstructed_sample'
 )
 router.register('task-progress', rest.TaskProgressViewSet, basename='task_progress')
 
+router.register('cached-predictions', rest.CachedPredictionViewSet, basename='cached_prediction')
+router.register('cached-examples', rest.CachedExampleViewSet, basename='cached_example')
 router.register(
-    'cached-predictions',
-    rest.CachedPredictionViewSet,
-    basename='cached_prediction'
+    'cached-model-examples', rest.CachedModelExamplesViewSet, basename='cached_model_examples'
 )
+router.register('cached-models', rest.CachedModelViewSet, basename='cached_model')
+router.register('cached-tensors', rest.CachedTensorsViewSet, basename='cached_tensors')
 router.register(
-    'cached-examples',
-    rest.CachedExampleViewSet,
-    basename='cached_example'
-)
-router.register(
-    'cached-model-examples',
-    rest.CachedModelExamplesViewSet,
-    basename='cached_model_examples'
-)
-router.register(
-    'cached-models',
-    rest.CachedModelViewSet,
-    basename='cached_model'
-)
-router.register(
-    'cached-tensors',
-    rest.CachedTensorsViewSet,
-    basename='cached_tensors'
-)
-router.register(
-    'cached-data-loaders',
-    rest.CachedDataLoadersViewSet,
-    basename='cached_data_loaders'
+    'cached-data-loaders', rest.CachedDataLoadersViewSet, basename='cached_data_loaders'
 )
 router.register(
     'cached-augmentation-pairs',
     rest.CachedAugmentationPairViewSet,
-    basename='cached_augmentation_pair'
+    basename='cached_augmentation_pair',
 )
 router.register(
-    'cached-augmentations',
-    rest.CachedAugmentationViewSet,
-    basename='cached_augmentation'
+    'cached-augmentations', rest.CachedAugmentationViewSet, basename='cached_augmentation'
 )
-router.register(
-    'cached-deep-ssm',
-    rest.CachedDeepSSMViewSet,
-    basename='cached_deep_ssm'
-)
+router.register('cached-deep-ssm', rest.CachedDeepSSMViewSet, basename='cached_deep_ssm')
 
 # OpenAPI generation
 schema_view = get_schema_view(

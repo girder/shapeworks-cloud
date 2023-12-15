@@ -165,8 +165,8 @@ class CachedAugmentation(TimeStampedModel, models.Model):
 
 class CachedDeepSSM(TimeStampedModel, models.Model):
     augmentation = models.ForeignKey(CachedAugmentation, on_delete=models.CASCADE)
-    data_loaders = models.ForeignKey(CachedDataLoaders, on_delete=models.CASCADE)
-    model = models.ForeignKey(CachedModel, on_delete=models.CASCADE)
+    data_loaders = models.ForeignKey(CachedDataLoaders, null=True, on_delete=models.CASCADE)
+    model = models.ForeignKey(CachedModel, null=True, on_delete=models.CASCADE)
 
 
 class Project(TimeStampedModel, models.Model):
