@@ -178,8 +178,8 @@ class CachedModel(ApiModel):
     best_model: Literal['core.CachedModel.best_model']
     final_model: Literal['core.CachedModel.final_model']
     examples: CachedModelExamples
-    pca_predictions: List[CachedPrediction]
-    ft_predictions: List[CachedPrediction]
+    pca_predictions: Optional[List[CachedPrediction]]
+    ft_predictions: Optional[List[CachedPrediction]]
     train_log_ft: Optional[Literal['core.CachedModel.train_log_ft']]
     best_model_ft: Optional[Literal['core.CachedModel.best_model_ft']]
     final_model_ft: Optional[Literal['core.CachedModel.final_model_ft']]

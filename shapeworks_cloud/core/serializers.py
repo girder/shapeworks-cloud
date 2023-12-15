@@ -108,8 +108,8 @@ class ProjectSerializer(serializers.ModelSerializer):
 
 class CachedModelReadSerializer(serializers.ModelSerializer):
     examples = CachedModelExamplesSerializer()
-    pca_predictions = CachedPredictionSerializer(many=True)
-    ft_predictions = CachedPredictionSerializer(many=True)
+    pca_predictions = CachedPredictionSerializer(allow_null=True, many=True)
+    ft_predictions = CachedPredictionSerializer(allow_null=True, many=True)
 
     class Meta:
         model = models.CachedModel

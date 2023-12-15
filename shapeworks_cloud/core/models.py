@@ -132,8 +132,12 @@ class CachedModel(TimeStampedModel, models.Model):
     best_model = S3FileField()
     final_model = S3FileField()
     examples = models.ForeignKey(CachedModelExamples, on_delete=models.CASCADE)
-    pca_predictions = models.ManyToManyField(CachedPrediction, related_name='pca_predictions')
-    ft_predictions = models.ManyToManyField(CachedPrediction, related_name='ft_predictions')
+    pca_predictions = models.ManyToManyField(
+        CachedPrediction, blank=True, related_name='pca_predictions'
+    )
+    ft_predictions = models.ManyToManyField(
+        CachedPrediction, blank=True, related_name='ft_predictions'
+    )
     train_log_ft = S3FileField(null=True)
     best_model_ft = S3FileField(null=True)
     final_model_ft = S3FileField(null=True)
