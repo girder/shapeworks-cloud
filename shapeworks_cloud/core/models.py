@@ -19,18 +19,30 @@ class Dataset(TimeStampedModel, models.Model):
     contributors = models.TextField(blank=True, default='')
     publications = models.TextField(blank=True, default='')
 
-    def get_contents(self):
+    def get_contents(self, type='all'):
         ret = []
 
         def truncate_filename(filename):
             return filename.split('/')[-1]
 
-        for shape_group in [
-            Segmentation.objects.filter(subject__dataset=self),
-            Mesh.objects.filter(subject__dataset=self),
-            Image.objects.filter(subject__dataset=self),
-            Contour.objects.filter(subject__dataset=self),
-        ]:
+        if type == 'all':
+            group_list = [
+                Segmentation.objects.filter(subject__dataset=self),
+                Mesh.objects.filter(subject__dataset=self),
+                Image.objects.filter(subject__dataset=self),
+                Contour.objects.filter(subject__dataset=self),
+            ]
+        elif type == 'shape':
+            group_list = [
+                Segmentation.objects.filter(subject__dataset=self),
+                Mesh.objects.filter(subject__dataset=self),
+            ]
+        elif type == 'image':
+            group_list = [Image.objects.filter(subject__dataset=self)]
+        elif type == 'contour':
+            group_list = [Contour.objects.filter(subject__dataset=self)]
+
+        for shape_group in group_list:
             for shape in shape_group:
                 ret.append(
                     {
@@ -108,24 +120,24 @@ class CachedAnalysis(TimeStampedModel, models.Model):
     good_bad_angles = models.JSONField(default=list)
 
 
-class CachedPrediction(TimeStampedModel, models.Model):
+class CachedPrediction(models.Model):
     particles = S3FileField()
 
 
-class CachedExample(TimeStampedModel, models.Model):
+class CachedExample(models.Model):
     train_particles = S3FileField()
     train_scalars = S3FileField()
     validation_particles = S3FileField()
     validation_scalars = S3FileField()
 
 
-class CachedModelExamples(TimeStampedModel, models.Model):
+class CachedModelExamples(models.Model):
     best = models.ForeignKey(CachedExample, on_delete=models.CASCADE, related_name='best')
     median = models.ForeignKey(CachedExample, on_delete=models.CASCADE, related_name='median')
     worst = models.ForeignKey(CachedExample, on_delete=models.CASCADE, related_name='worst')
 
 
-class CachedModel(TimeStampedModel, models.Model):
+class CachedModel(models.Model):
     configuration = (
         S3FileField()
     )  # this is a json file but we aren't reading it, only passing the path to DeepSSMUtils
@@ -143,25 +155,25 @@ class CachedModel(TimeStampedModel, models.Model):
     final_model_ft = S3FileField(null=True)
 
 
-class CachedTensors(TimeStampedModel, models.Model):
+class CachedTensors(models.Model):
     train = S3FileField()
     validation = S3FileField()
     test = S3FileField()
 
 
-class CachedDataLoaders(TimeStampedModel, models.Model):
+class CachedDataLoaders(models.Model):
     mean_pca = S3FileField()
     std_pca = S3FileField()
     test_names = S3FileField()  # this is a .txt file but we only pass the path to DeepSSMUtils
     tensors = models.ForeignKey(CachedTensors, on_delete=models.CASCADE, related_name='tensors')
 
 
-class CachedAugmentationPair(TimeStampedModel, models.Model):
+class CachedAugmentationPair(models.Model):
     file = S3FileField()
     particles = S3FileField()
 
 
-class CachedAugmentation(TimeStampedModel, models.Model):
+class CachedAugmentation(models.Model):
     pairs = models.ManyToManyField(CachedAugmentationPair)
     total_data_csv = S3FileField()  # CSV file but we don't read, only pass to DeepSSMUtils
     violin_plot = S3FileField()  # PNG file used for plot visualization
@@ -220,7 +232,7 @@ class Project(TimeStampedModel, models.Model):
                     'mesh': [(m.anatomy_type, m.file) for m in subject.meshes.all()],
                     'segmentation': [(s.anatomy_type, s.file) for s in subject.segmentations.all()],
                     'contour': [(c.anatomy_type, c.file) for c in subject.contours.all()],
-                    'image': [(i.anatomy_type, i.file) for i in subject.images.all()],
+                    'image': [(i.modality, i.file) for i in subject.images.all()],
                     'constraints': [(c.anatomy_type, c.file) for c in subject.constraints.all()],
                     'landmarks': [
                         (lm.anatomy_type, lm.file)

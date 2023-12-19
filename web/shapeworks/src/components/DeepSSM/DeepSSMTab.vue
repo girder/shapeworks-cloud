@@ -20,7 +20,7 @@ export default {
         // Split
         const splitData = {
             trainSplit: ref<number>(60),
-            testSplit: ref<number>(20),
+            testingSplit: ref<number>(20),
             validationSplit: ref<number>(20),
         }
         
@@ -28,9 +28,8 @@ export default {
         const augmentationData = {
             numSamples: ref<number>(3),
             numDimensions: ref<number>(3),
-            variablity: ref<number>(95),
+            percentVariability: ref<number>(95),
             samplerType : ref<Sampler>(Sampler.Gaussian),
-        
         }
         
         // Training
@@ -121,7 +120,7 @@ export default {
                     Split
                 </v-expansion-panel-header>
                 <v-expansion-panel-content>
-                    <v-text-field v-model="splitData.testSplit" type="number" label="Test Split" suffix="%" />
+                    <v-text-field v-model="splitData.testingSplit" type="number" label="Test Split" suffix="%" />
                     <v-text-field v-model="splitData.validationSplit" type="number" label="Validation Split" suffix="%" />
                 </v-expansion-panel-content>
             </v-expansion-panel>
@@ -132,7 +131,7 @@ export default {
                 <v-expansion-panel-content>
                     <v-text-field v-model="augmentationData.numSamples" type="number" label="Number of Samples" min="1" />
                     <v-text-field v-model="augmentationData.numDimensions" type="number" label="Number of PCA Dimensions" min="1" />
-                    <v-text-field v-model="augmentationData.variablity" type="number" label="Percent Variablity Preserved" min="0" max="100" suffix="%" />
+                    <v-text-field v-model="augmentationData.percentVariability" type="number" label="Percent Variablity Preserved" min="0" max="100" suffix="%" />
 
                     <v-select 
                         :items="Object.values(Sampler)"

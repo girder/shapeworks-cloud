@@ -5,6 +5,8 @@ from subprocess import PIPE, Popen
 from tempfile import TemporaryDirectory
 from typing import Dict, List
 
+import DataAugmentationUtils
+import DeepSSMUtils
 from celery import shared_task
 from django.conf import settings
 from django.contrib.auth.models import User
@@ -18,9 +20,6 @@ from swcc.api import swcc_session
 from swcc.models import Project as SWCCProject
 from swcc.models.constants import expected_key_prefixes
 from swcc.models.project import ProjectFileIO
-
-import DeepSSMUtils
-import DataAugmentationUtils
 
 
 def parse_progress(xml_string):
@@ -70,6 +69,23 @@ def interpret_form_data(data, command, swcc_project):
             data['number_of_particles'] = ' '.join(
                 str(num_particles) for i in range(max_num_domains)
             )
+    elif command == 'augment':
+        # split data should only be overwritten when running augmentation
+        data['validation_split'] = data['validationSplit']
+        data['testing_split'] = data['testingSplit']
+
+        data['aug_num_dims'] = data['numDimensions']
+        data['aug_num_samples'] = data['numSamples']
+        data['aug_percent_variability'] = data['percentVariability']
+        data['aug_sampler_type'] = data['samplerType']
+    elif command == 'train':
+        data['train_epochs'] = data['epochs']
+        data['train_learning_rate'] = data['learningRate']
+        data['train_decay_learning_rate'] = data['decayLearningRate']
+        data['train_batch_size'] = data['batchSize']
+        data['train_fine_tuning'] = data['fineTuning']
+        data['train_fine_tuning_epochs'] = data['ftEpochs']
+        data['train_fine_tuning_learning_rate'] = data['ftLearningRate']
 
     return data
 
@@ -178,52 +194,72 @@ def run_deepssm_command(
 
             if form_data:
                 # write the form data to the project file
-                # TODO: implement interpret_form_data for deepssm forms
                 form_data = interpret_form_data(form_data, command, swcc_project)
                 edit_swproj_section(
                     Path(download_dir, project_filename),
-                    command,
+                    'deepssm',
                     form_data,
                 )
 
             result_data = {}
 
+            testing_split = float(form_data.get('testing_split'))
+
             # perform deepssm tasks
             if command == 'augment':
+                # TODO: Does this need to be custom or deepssmutils integration?
                 # get training image list
-                train_image_list = get_list(swcc_project, DeepSSMFileType.IMAGE, DeepSSMSplitType.TRAIN)
+                train_image_list = get_list(
+                    swcc_project, DeepSSMFileType.IMAGE, DeepSSMSplitType.TRAIN, testing_split
+                )
+
                 # get training particle list
-                train_particle_list = get_list(swcc_project, DeepSSMFileType.PARTICLE, DeepSSMSplitType.TRAIN)
+                train_particle_list = get_list(
+                    swcc_project, DeepSSMFileType.PARTICLE, DeepSSMSplitType.TRAIN, testing_split
+                )
 
                 # get augmentation parameters as object
-                # TODO: fix this to not be needed (interpret_form_data should handle this)
-                num_samples, num_dimensions, variability, sampler_type = form_data.values()
+                (
+                    aug_num_samples,
+                    aug_num_dimensions,
+                    aug_percent_variability,
+                    aug_sampler_type,
+                ) = form_data.values()
+
                 # set augmentation directory (where the augmentaton output will be stored)
-                # make sure this is accessible (might need to add field to the project model)
-                # TotalData.csv should be saved to a project object
                 aug_dir = download_dir + '/Augmentation/'
                 total_data = aug_dir + 'TotalData.csv'
                 # run augmentation via (runDataAugmentation)
-                result_data['total_data'] = total_data
                 result_data['aug_dims'] = DataAugmentationUtils.runDataAugmentation(
                     aug_dir,
                     train_image_list,
                     train_particle_list,
-                    num_samples,
-                    num_dimensions,
-                    variability,
-                    sampler_type,
+                    aug_num_samples,
+                    aug_num_dimensions,
+                    aug_percent_variability,
+                    aug_sampler_type,
                     0,
                     1,
                 )
 
+                result_data['aug_dir'] = aug_dir
+                result_data['total_data'] = total_data
+
                 # visualize the augmentation results
-                DataAugmentationUtils.visualizeAugmentation(aug_dir + "TotalData.csv", "violin", False)
+                result_data['visualization'] = DataAugmentationUtils.visualizeAugmentation(
+                    aug_dir + "TotalData.csv", "violin", False
+                )
             elif command == 'train':
                 # get lists of training images, training particles, and testing images
-                train_image_list = get_list(swcc_project, DeepSSMFileType.IMAGE, DeepSSMSplitType.TRAIN)
-                train_particle_list = get_list(swcc_project, DeepSSMFileType.PARTICLE, DeepSSMSplitType.TRAIN)
-                test_image_list = get_list(swcc_project, DeepSSMFileType.IMAGE, DeepSSMSplitType.TEST)
+                train_image_list = get_list(
+                    swcc_project, DeepSSMFileType.IMAGE, DeepSSMSplitType.TRAIN, testing_split
+                )
+                train_particle_list = get_list(
+                    swcc_project, DeepSSMFileType.PARTICLE, DeepSSMSplitType.TRAIN, testing_split
+                )
+                test_image_list = get_list(
+                    swcc_project, DeepSSMFileType.IMAGE, DeepSSMSplitType.TEST, testing_split
+                )
 
                 # set directories
                 out_dir = download_dir + '/deepssm/'
@@ -233,14 +269,23 @@ def run_deepssm_command(
                 total_data = ''  # TODO: pull totaldata.csv file from s3 or project? ensure this is a directory with Path() or similar
 
                 # get parameters
-                epochs, learning_rate, batch_size, decay_lr, fine_tune, fine_tune_epochs, fine_tune_learning_rate, num_dims = form_data.values()
+                (
+                    epochs,
+                    learning_rate,
+                    batch_size,
+                    decay_lr,
+                    fine_tune,
+                    fine_tune_epochs,
+                    fine_tune_learning_rate,
+                    num_dims,
+                ) = form_data.values()
                 train_split = form_data['train_split']
 
                 # downsample to 75% of original resolution
                 downsample_factor = 0.75
 
                 # get train/validation loaders
-                DeepSSMUtils.getTrainValLoaders(
+                result_data['train_loaders'] = DeepSSMUtils.getTrainValLoaders(
                     loader_dir,
                     total_data,
                     batch_size,
@@ -250,16 +295,11 @@ def run_deepssm_command(
                 )
 
                 # get test loader
-                DeepSSMUtils.getTestLoader(
-                    loader_dir,
-                    test_image_list,
-                    downsample_factor,
-                    down_dir
-                )
+                result_data['test_loaders'] = DeepSSMUtils.getTestLoader(loader_dir, test_image_list, downsample_factor, down_dir)
 
                 # prepare config file
-                config_dir = out_dir + 'configuration.json'
-                DeepSSMUtils.prepareConfigFile(
+                result_data['config_dir'] = config_dir = out_dir + 'configuration.json'
+                result_data['config_file'] = DeepSSMUtils.prepareConfigFile(
                     config_dir,
                     "model",
                     num_dims,
@@ -271,11 +311,11 @@ def run_deepssm_command(
                     decay_lr,
                     fine_tune,
                     fine_tune_epochs,
-                    fine_tune_learning_rate
+                    fine_tune_learning_rate,
                 )
 
                 # run training with config file
-                DeepSSMUtils.trainDeepSSM(config_dir)
+                result_data['model'] = DeepSSMUtils.trainDeepSSM(config_dir)
 
             elif command == 'test':
                 # get configuration file
@@ -283,7 +323,7 @@ def run_deepssm_command(
                 config_dir = download_dir + '/deepssm/configuration.json'
 
                 # run testing with config file
-                DeepSSMUtils.testDeepSSM(config_dir)
+                result_data['testing'] = DeepSSMUtils.testDeepSSM(config_dir)
 
             post_command_function(project, download_dir, result_data, project_filename)
             progress.update_percentage(100)
@@ -498,16 +538,54 @@ def analyze(user_id, project_id, progress_id, args: List[str]):
 @shared_task
 def deepssm_augment(user_id, project_id, progress_id, form_data):
     def pre_command_function():
-        # delete any previous results
-        pass
+        project = models.Project.objects.get(id=project_id)
+
+        # delete any previous results.
+        # Augmentation is the first step so should remove all cached deepssm data
+        models.CachedPrediction.objects.filter(
+            ft_predictions__cacheddeepssm__project=project
+        ).delete()
+        models.CachedPrediction.objects.filter(
+            pca_predictions__cacheddeepssm__project=project
+        ).delete()
+        models.CachedExample.objects.filter(
+            best__cachedmodel__cacheddeepssm__project=project
+        ).delete()
+        models.CachedExample.objects.filter(
+            median__cachedmodel__cacheddeepssm__project=project
+        ).delete()
+        models.CachedExample.objects.filter(
+            worst__cachedmodel__cacheddeepssm__project=project
+        ).delete()
+        models.CachedModelExamples.objects.filter(
+            cachedmodel__cacheddeepssm__project=project
+        ).delete()
+        models.CachedModel.objects.filter(cacheddeepssm__project=project).delete()
+        models.CachedTensors.objects.filter(tensors__cacheddeepssm__project=project).delete()
+        models.CachedDataLoaders.objects.filter(cacheddeepssm__project=project).delete()
+        models.CachedAugmentationPair.objects.filter(
+            cachedaugmentation__cacheddeepssm__project=project
+        ).delete()
+        models.CachedAugmentation.objects.filter(cacheddeepssm__project=project).delete()
+        models.CachedDeepSSM.objects.filter(project=project).delete()
 
     def post_command_function(project, download_dir, result_data, project_filename):
         print(result_data)
+        # TODO: save relevant result data to db (models)
         # save project file changes to database
         project.file.save(
             project_filename,
             open(Path(download_dir, project_filename), 'rb'),
         )
+
+        for entry in result_data:
+            if 'aug_dir' in entry.keys():
+                pair = models.CachedAugmentationPair.objects.create()
+                pair.file.save(
+                    result_data[entry].split('/') + 'Generated-Images',
+                    open(Path(download_dir, result_data[entry]), 'rb'),
+                )
+                pair.save()
 
     run_deepssm_command(
         user_id,
@@ -516,15 +594,37 @@ def deepssm_augment(user_id, project_id, progress_id, form_data):
         'augment',
         pre_command_function,
         post_command_function,
-        progress_id
+        progress_id,
     )
 
 
 @shared_task
 def deepssm_train(user_id, project_id, progress_id, form_data):
     def pre_command_function():
+        project = models.Project.objects.get(id=project_id)
+
         # delete any previous results
-        pass
+        models.CachedPrediction.objects.filter(
+            ft_predictions__cacheddeepssm__project=project
+        ).delete()
+        models.CachedPrediction.objects.filter(
+            pca_predictions__cacheddeepssm__project=project
+        ).delete()
+        models.CachedExample.objects.filter(
+            best__cachedmodel__cacheddeepssm__project=project
+        ).delete()
+        models.CachedExample.objects.filter(
+            median__cachedmodel__cacheddeepssm__project=project
+        ).delete()
+        models.CachedExample.objects.filter(
+            worst__cachedmodel__cacheddeepssm__project=project
+        ).delete()
+        models.CachedModelExamples.objects.filter(
+            cachedmodel__cacheddeepssm__project=project
+        ).delete()
+        models.CachedModel.objects.filter(cacheddeepssm__project=project).delete()
+        models.CachedTensors.objects.filter(tensors__cacheddeepssm__project=project).delete()
+        models.CachedDataLoaders.objects.filter(cacheddeepssm__project=project).delete()
 
     def post_command_function(project, download_dir, result_data, project_filename):
         print(result_data)
@@ -538,18 +638,25 @@ def deepssm_train(user_id, project_id, progress_id, form_data):
         user_id,
         project_id,
         form_data,
-        'training',
+        'train',
         pre_command_function,
         post_command_function,
-        progress_id
+        progress_id,
     )
 
 
 @shared_task
 def deepssm_test(user_id, project_id, progress_id, form_data):
     def pre_command_function():
+        project = models.Project.objects.get(id=project_id)
+
         # delete any previous results
-        pass
+        models.CachedPrediction.objects.filter(
+            ft_predictions__cacheddeepssm__project=project
+        ).delete()
+        models.CachedPrediction.objects.filter(
+            pca_predictions__cacheddeepssm__project=project
+        ).delete()
 
     def post_command_function(project, download_dir, result_data, project_filename):
         print(result_data)
@@ -563,8 +670,8 @@ def deepssm_test(user_id, project_id, progress_id, form_data):
         user_id,
         project_id,
         form_data,
-        'testing',
+        'test',
         pre_command_function,
         post_command_function,
-        progress_id
+        progress_id,
     )
