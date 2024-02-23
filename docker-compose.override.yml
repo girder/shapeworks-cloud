@@ -42,6 +42,8 @@ services:
         "--app",
         "shapeworks_cloud.celery",
         "worker",
+        "-P",
+        "threads",
         "--loglevel",
         "INFO",
         "--without-heartbeat"
@@ -53,6 +55,7 @@ services:
       - .:/opt/django-project
     # Use host mode so that celery can use the localhost:8000 API in dev deployments
     network_mode: host
+    shm_size: 8gb
     depends_on:
       - postgres
       - rabbitmq
