@@ -120,69 +120,35 @@ class CachedAnalysis(TimeStampedModel, models.Model):
     good_bad_angles = models.JSONField(default=list)
 
 
-class CachedPrediction(models.Model):
+class CachedDeepSSMTestingData(models.Model):
+    mean_distance = models.FloatField()
+    mesh = S3FileField()
     particles = S3FileField()
 
 
-class CachedExample(models.Model):
-    train_particles = S3FileField()
-    train_scalars = S3FileField()
-    validation_particles = S3FileField()
-    validation_scalars = S3FileField()
+class CachedDeepSSMTesting(models.Model):
+    data = models.ManyToManyField(CachedDeepSSMTestingData)
 
 
-class CachedModelExamples(models.Model):
-    best = models.ForeignKey(CachedExample, on_delete=models.CASCADE, related_name='best')
-    median = models.ForeignKey(CachedExample, on_delete=models.CASCADE, related_name='median')
-    worst = models.ForeignKey(CachedExample, on_delete=models.CASCADE, related_name='worst')
+class CachedDeepSSMTraining(models.Model):
+    visualization = S3FileField()  # .png
+    data_table = S3FileField()  # .csv
 
 
-class CachedModel(models.Model):
-    configuration = (
-        S3FileField()
-    )  # this is a json file but we aren't reading it, only passing the path to DeepSSMUtils
-    best_model = S3FileField()
-    final_model = S3FileField()
-    examples = models.ForeignKey(CachedModelExamples, on_delete=models.CASCADE)
-    pca_predictions = models.ManyToManyField(
-        CachedPrediction, blank=True, related_name='pca_predictions'
-    )
-    ft_predictions = models.ManyToManyField(
-        CachedPrediction, blank=True, related_name='ft_predictions'
-    )
-    train_log_ft = S3FileField(null=True)
-    best_model_ft = S3FileField(null=True)
-    final_model_ft = S3FileField(null=True)
-
-
-class CachedTensors(models.Model):
-    train = S3FileField()
-    validation = S3FileField()
-    test = S3FileField()
-
-
-class CachedDataLoaders(models.Model):
-    mean_pca = S3FileField()
-    std_pca = S3FileField()
-    test_names = S3FileField()  # this is a .txt file but we only pass the path to DeepSSMUtils
-    tensors = models.ForeignKey(CachedTensors, on_delete=models.CASCADE, related_name='tensors')
-
-
-class CachedAugmentationPair(models.Model):
-    file = S3FileField()
+class CachedDeepSSMAugPair(models.Model):
+    mesh = S3FileField()
     particles = S3FileField()
 
 
-class CachedAugmentation(models.Model):
-    pairs = models.ManyToManyField(CachedAugmentationPair)
-    total_data_csv = S3FileField()  # CSV file but we don't read, only pass to DeepSSMUtils
-    violin_plot = S3FileField()  # PNG file used for plot visualization
+class CachedDeepSSMAug(models.Model):
+    visualization = S3FileField()  # .png
+    pairs = models.ManyToManyField(CachedDeepSSMAugPair)
 
 
 class CachedDeepSSM(TimeStampedModel, models.Model):
-    augmentation = models.ForeignKey(CachedAugmentation, on_delete=models.CASCADE)
-    data_loaders = models.ForeignKey(CachedDataLoaders, null=True, on_delete=models.CASCADE)
-    model = models.ForeignKey(CachedModel, null=True, on_delete=models.CASCADE)
+    augmentation = models.ForeignKey(CachedDeepSSMAug, on_delete=models.CASCADE)
+    training = models.ForeignKey(CachedDeepSSMTraining, null=True, on_delete=models.CASCADE)
+    testing = models.ForeignKey(CachedDeepSSMTesting, null=True, on_delete=models.CASCADE)
 
 
 class Project(TimeStampedModel, models.Model):
@@ -218,10 +184,12 @@ class Project(TimeStampedModel, models.Model):
         )
 
     def get_download_paths(self):
+        print('get_download_paths')
         ret = {}
         with self.file.open() as f:
             data = json.load(f)['data']
 
+        print(data)
         for subject_info in data:
             subject = Subject.objects.filter(
                 dataset=self.dataset, name=subject_info['name']

@@ -37,9 +37,6 @@ import {
     abortTask,
     analyzeProject,
     deleteTaskProgress,
-    deepssmAugmentProject,
-    deepssmTestProject,
-    deepssmTrainProject,
     getDataset,
     getDatasets,
     getGroomedShapeForDataObject, getOptimizedParticlesForDataObject,
@@ -47,6 +44,7 @@ import {
     getReconstructedSamplesForProject,
     getTaskProgress,
     groomProject, optimizeProject, refreshProject,
+    deepssmRunProject,
 } from '@/api/rest';
 import { layers, COLORS } from "./constants";
 import { getDistance, hexToRgb } from "@/helper";
@@ -194,12 +192,8 @@ export async function spawnJob(action: string, payload: Record<string, any>): Pr
                 (l) => l !== 'Reconstructed'
             )
             return (await analyzeProject(projectId, payload as AnalysisParams))?.data
-        case 'deepssm_augment':
-            return (await deepssmAugmentProject(projectId, payload))?.data
-        case 'deepssm_train':
-            return (await deepssmTrainProject(projectId, payload))?.data
-        case 'deepssm_test':
-            return (await deepssmTestProject(projectId, payload))?.data
+        case 'deepssm_run':
+            return (await deepssmRunProject(projectId, payload))?.data
         default:
             break;
     }

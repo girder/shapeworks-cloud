@@ -1,6 +1,6 @@
 <script lang="ts">
 /* eslint-disable no-unused-vars */
-import { allSubjectsForDataset, spawnJob } from '@/store';
+import { spawnJob } from '@/store';
 import { Ref, ref } from 'vue';
 
 
@@ -15,31 +15,35 @@ export default {
             KDE = "KDE",
         }
 
+        enum LossFunction {
+            MSE = "MSE",
+            Focal = "Focal",
+        }
+
         const openTab = ref<number>(0);
 
-        // Split
-        const splitData = {
-            trainSplit: ref<number>(60),
+        const prepData = {
             testingSplit: ref<number>(20),
             validationSplit: ref<number>(20),
+            percentVariability: ref<number>(95),
+            imageSpacing: ref<{x: number, y: number, z: number}>({x: 1, y: 1, z: 1})
         }
         
         // Augmentation
         const augmentationData = {
-            numSamples: ref<number>(3),
-            numDimensions: ref<number>(3),
-            percentVariability: ref<number>(95),
+            numSamples: ref<number>(300),
             samplerType : ref<Sampler>(Sampler.Gaussian),
         }
         
         // Training
         const trainingData = {
-            epochs: ref<number>(2),
+            lossFunction: ref<LossFunction>(LossFunction.MSE),
+            epochs: ref<number>(100),
             learningRate: ref<number>(0.001),
             batchSize: ref<number>(8),
             decayLearningRate: ref<boolean>(true),
             fineTuning: ref<boolean>(true),
-            ftEpochs: ref<number>(2),
+            ftEpochs: ref<number>(100),
             ftLearningRate: ref<number>(0.001),
         }
 
@@ -60,39 +64,28 @@ export default {
             )
         }
 
-        async function submitAugmentation() {
+        async function submitDeepSSMJob() {
+            const prepFormData = getFormData(prepData);
             const augFormData = getFormData(augmentationData);
-            const splitFormData = getFormData(splitData);
+            const trainFormData = getFormData(trainingData);
             const formData = {
+                ...prepFormData,
                 ...augFormData,
-                ...splitFormData
+                ...trainFormData,
             }
-            return await spawnJob("deepssm_augment", formData);
-        }
 
-        async function submitTraining() {
-            const trainingFormData = getFormData(trainingData);
-            const splitFormData = getFormData(splitData);
-            const formData = {
-                ...trainingFormData,
-                ...splitFormData
-            }
-            return await spawnJob("deepssm_train", formData);
-        }
-
-        async function submitTesting() {
-            return await spawnJob("deepssm_test", {});
+            console.log(formData);
+            return await spawnJob("deepssm_run", formData);
         }
 
         return {
             openTab,
-            splitData,
+            prepData,
             augmentationData,
             trainingData,
             Sampler,
-            submitAugmentation,
-            submitTraining,
-            submitTesting,
+            LossFunction,
+            submitDeepSSMJob,
         }
     },
 }
@@ -117,11 +110,18 @@ export default {
         <v-expansion-panels v-model="openTab">
             <v-expansion-panel>
                 <v-expansion-panel-header>
-                    Split
+                    Prep
                 </v-expansion-panel-header>
                 <v-expansion-panel-content>
-                    <v-text-field v-model="splitData.testingSplit" type="number" label="Test Split" suffix="%" />
-                    <v-text-field v-model="splitData.validationSplit" type="number" label="Validation Split" suffix="%" />
+                    <v-text-field v-model="prepData.testingSplit" type="number" label="Test Split" suffix="%" />
+                    <v-text-field v-model="prepData.validationSplit" type="number" label="Validation Split" suffix="%" />
+                    <v-text-field v-model="prepData.percentVariability" type="number" label="Percent Variablity Preserved" min="0" max="100" suffix="%" />
+                    <div class="image-spacing">
+                        <v-label class="spacing-label">Image Spacing</v-label>
+                        <v-text-field class="spacing-input" v-model="prepData.imageSpacing.value.x" type="number" label="X" />
+                        <v-text-field class="spacing-input" v-model="prepData.imageSpacing.value.y" type="number" label="Y" />
+                        <v-text-field class="spacing-input" v-model="prepData.imageSpacing.value.z" type="number" label="Z" />
+                    </div>
                 </v-expansion-panel-content>
             </v-expansion-panel>
             <v-expansion-panel>
@@ -129,16 +129,13 @@ export default {
                     Augmentation
                 </v-expansion-panel-header>
                 <v-expansion-panel-content>
-                    <v-text-field v-model="augmentationData.numSamples" type="number" label="Number of Samples" min="1" />
-                    <v-text-field v-model="augmentationData.numDimensions" type="number" label="Number of PCA Dimensions" min="1" />
-                    <v-text-field v-model="augmentationData.percentVariability" type="number" label="Percent Variablity Preserved" min="0" max="100" suffix="%" />
+                    <v-text-field v-model="augmentationData.numSamples.value" type="number" label="Number of Samples" min="1" />
 
                     <v-select 
                         :items="Object.values(Sampler)"
                         v-model="augmentationData.samplerType"
                         label="Sampler Type"
                     />
-                    <button @click="submitAugmentation">Submit</button>
                     <!-- needs sub-panel for data -->
                 </v-expansion-panel-content>
             </v-expansion-panel>
@@ -147,18 +144,22 @@ export default {
                     Training
                 </v-expansion-panel-header>
                 <v-expansion-panel-content>
-                    <v-text-field v-model="trainingData.epochs" type="number" label="Epochs" min="0" />
-                    <v-text-field v-model="trainingData.learningRate" type="number" label="Learning Rate" min="0" />
-                    <v-text-field v-model="trainingData.batchSize" type="number" label="Batch Size" min="1" />
+                    <v-select 
+                        :items="Object.values(LossFunction)"
+                        v-model="trainingData.lossFunction"
+                        label="Loss Function"
+                    />
+                    <v-text-field v-model="trainingData.epochs.value" type="number" label="Epochs" min="0" />
+                    <v-text-field v-model="trainingData.learningRate.value" type="number" label="Learning Rate" min="0" />
+                    <v-text-field v-model="trainingData.batchSize.value" type="number" label="Batch Size" min="1" />
 
                     <v-checkbox v-model="trainingData.decayLearningRate" label="Decay Learning Rate"></v-checkbox>
 
                     <v-checkbox v-model="trainingData.fineTuning" label="Fine Tuning"></v-checkbox>
 
-                    <v-text-field v-model="trainingData.ftEpochs" type="number" label="Fine Tuning Epochs" min="1" />
-                    <v-text-field v-model="trainingData.ftLearningRate" type="number" label="Fine Tuning Learning Rate" min="0" />
+                    <v-text-field v-model="trainingData.ftEpochs.value" :disabled="!trainingData.fineTuning" type="number" label="Fine Tuning Epochs" min="1" />
+                    <v-text-field v-model="trainingData.ftLearningRate.value" :disabled="!trainingData.fineTuning" type="number" label="Fine Tuning Learning Rate" min="0" />
 
-                    <button @click="submitTraining">Submit</button>
                     <!-- TODO: needs sub-panel for training output -->
                     <!-- needs data table with "Original Data" and "Generated Data" options -->
                     <!-- also needs violin plot to compare original and generated data -->
@@ -170,10 +171,10 @@ export default {
                 </v-expansion-panel-header>
                 <v-expansion-panel-content>
                     <!-- Data table for name and average distance -->
-                    <button @click="submitTesting">Submit</button>
                 </v-expansion-panel-content>
             </v-expansion-panel>
         </v-expansion-panels>
+        <v-btn @click="submitDeepSSMJob">Run DeepSSM tasks</v-btn>
         <!-- <div class="loading-dialog"><v-dialog v-model="currentlyCaching" width="10%">Calculating...  <v-progress-circular indeterminate align-center></v-progress-circular></v-dialog></div> -->
     </div>
 </template>
@@ -188,5 +189,23 @@ input::-webkit-inner-spin-button {
 input[type=number] {
     appearance: textfield;
     -moz-appearance: textfield;
+}
+
+.spacing-label {
+    margin-bottom: 0;
+}
+
+.spacing-input {
+    margin-bottom: 0;
+    width: 6%;
+    margin: 0 10px;
+}
+
+.image-spacing {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0;
 }
 </style>

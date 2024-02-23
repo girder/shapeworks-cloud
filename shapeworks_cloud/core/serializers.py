@@ -42,53 +42,37 @@ class CachedAnalysisSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-class CachedPredictionSerializer(serializers.ModelSerializer):
+class CachedDeepSSMTestingDataSerializer(serializers.ModelSerializer):
     class Meta:
-        model = models.CachedPrediction
+        model = models.CachedDeepSSMTestingData
         fields = '__all__'
 
 
-class CachedExampleSerializer(serializers.ModelSerializer):
+class CachedDeepSSMTestingSerializer(serializers.ModelSerializer):
+    data = CachedDeepSSMTestingDataSerializer(many=True)
+
     class Meta:
-        model = models.CachedExample
+        model = models.CachedDeepSSMTesting
         fields = '__all__'
 
 
-class CachedModelExamplesSerializer(serializers.ModelSerializer):
+class CachedDeepSSMTrainingSerializer(serializers.ModelSerializer):
     class Meta:
-        model = models.CachedModelExamples
+        model = models.CachedDeepSSMTraining
         fields = '__all__'
 
 
-class CachedModelSerializer(serializers.ModelSerializer):
+class CachedDeepSSMAugPairSerializer(serializers.ModelSerializer):
     class Meta:
-        model = models.CachedModel
+        model = models.CachedDeepSSMAugPair
         fields = '__all__'
 
 
-class CachedTensorsSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = models.CachedTensors
-        fields = '__all__'
-
-
-class CachedDataLoadersSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = models.CachedDataLoaders
-        fields = '__all__'
-
-
-class CachedAugmentationPairSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = models.CachedAugmentationPair
-        fields = '__all__'
-
-
-class CachedAugmentationSerializer(serializers.ModelSerializer):
-    pairs = CachedAugmentationPairSerializer(many=True)
+class CachedDeepSSMAugSerializer(serializers.ModelSerializer):
+    pairs = CachedDeepSSMAugPairSerializer(many=True)
 
     class Meta:
-        model = models.CachedAugmentation
+        model = models.CachedDeepSSMAug
         fields = '__all__'
 
 
@@ -106,36 +90,24 @@ class ProjectSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-class CachedModelReadSerializer(serializers.ModelSerializer):
-    examples = CachedModelExamplesSerializer()
-    pca_predictions = CachedPredictionSerializer(allow_null=True, many=True)
-    ft_predictions = CachedPredictionSerializer(allow_null=True, many=True)
+class CachedDeepSSMTestingReadSerializer(serializers.ModelSerializer):
+    data = CachedDeepSSMTestingDataSerializer(many=True)
 
     class Meta:
-        model = models.CachedModel
+        model = models.CachedDeepSSMTesting
         fields = '__all__'
 
 
-class CachedDataLoadersReadSerializer(serializers.ModelSerializer):
-    tensors = CachedTensorsSerializer()
+class CachedDeepSSMAugReadSerializer(serializers.ModelSerializer):
+    pairs = CachedDeepSSMAugPairSerializer(many=True)
 
     class Meta:
-        model = models.CachedDataLoaders
-        fields = '__all__'
-
-
-class CachedAugmentationReadSerializer(serializers.ModelSerializer):
-    pairs = CachedAugmentationPairSerializer(many=True)
-
-    class Meta:
-        model = models.CachedAugmentation
+        model = models.CachedDeepSSMAug
         fields = '__all__'
 
 
 class CachedDeepSSMReadSerializer(serializers.ModelSerializer):
-    augmentation = CachedAugmentationSerializer()
-    data_loaders = CachedDataLoadersSerializer(allow_null=True)
-    model = CachedModelSerializer(allow_null=True)
+    augmentation = CachedDeepSSMAugSerializer()
 
     class Meta:
         model = models.CachedDeepSSM

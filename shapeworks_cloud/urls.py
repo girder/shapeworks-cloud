@@ -51,23 +51,35 @@ router.register(
 )
 router.register('task-progress', rest.TaskProgressViewSet, basename='task_progress')
 
-router.register('cached-predictions', rest.CachedPredictionViewSet, basename='cached_prediction')
-router.register('cached-examples', rest.CachedExampleViewSet, basename='cached_example')
+# ----------------
+# DeepSSM
+# ----------------
 router.register(
-    'cached-model-examples', rest.CachedModelExamplesViewSet, basename='cached_model_examples'
+    'cached-deepssm-testing-data',
+    rest.CachedDeepSSMTestingDataViewSet,
+    basename='cached_deepssm_testing_data',
 )
-router.register('cached-models', rest.CachedModelViewSet, basename='cached_model')
-router.register('cached-tensors', rest.CachedTensorsViewSet, basename='cached_tensors')
+
 router.register(
-    'cached-data-loaders', rest.CachedDataLoadersViewSet, basename='cached_data_loaders'
+    'cached-deepssm-testing',
+    rest.CachedDeepSSMTestingViewSet,
+    basename='cached_deepssm_testing',
+)
+
+router.register(
+    'cached-deepssm-training',
+    rest.CachedDeepSSMTrainingViewSet,
+    basename='cached_deepssm_training',
 )
 router.register(
-    'cached-augmentation-pairs',
-    rest.CachedAugmentationPairViewSet,
-    basename='cached_augmentation_pair',
+    'cached-deepssm-aug-pair',
+    rest.CachedDeepSSMAugPairViewSet,
+    basename='cached_deepssm_aug',
 )
 router.register(
-    'cached-augmentations', rest.CachedAugmentationViewSet, basename='cached_augmentation'
+    'cached-deepssm-aug',
+    rest.CachedDeepSSMAugViewSet,
+    basename='cached_deepssm_aug',
 )
 router.register('cached-deep-ssm', rest.CachedDeepSSMViewSet, basename='cached_deep_ssm')
 
