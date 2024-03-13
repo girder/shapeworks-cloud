@@ -18,6 +18,7 @@ from rest_framework.views import APIView
 from rest_framework.viewsets import GenericViewSet
 
 from . import filters, models, serializers
+from .deepssm_tasks import deepssm_run
 from .tasks import analyze, groom, optimize
 
 DB_WRITE_ACCESS_LOG_FILE = Path(gettempdir(), 'logging', 'db_write_access.log')
@@ -410,6 +411,32 @@ class ProjectViewSet(BaseViewSet):
         )
         pass
 
+    # TODO: ADJUST FOR PHASE 2/3
+    @action(
+        detail=True,
+        url_path='deepssm-run',
+        url_name='deepssm-run',
+        methods=['POST'],
+    )
+    def deepssm_run(self, request, **kwargs):
+        project = self.get_object()
+        form_data = request.data
+        form_data = {k: str(v) for k, v in form_data.items()}
+
+        deepssm_progress = models.TaskProgress.objects.create(name='deepssm', project=project)
+
+        log_write_access(
+            timezone.now(),
+            self.request.user.username,
+            'Analyze Project',
+            project.id,
+        )
+
+        deepssm_run.delay(request.user.id, project.id, deepssm_progress.id, form_data)
+        return Response(
+            status=status.HTTP_200_OK,
+        )
+
 
 class GroomedSegmentationViewSet(BaseViewSet):
     queryset = models.GroomedSegmentation.objects.all()
@@ -463,6 +490,46 @@ class CachedAnalysisGroupViewSet(BaseViewSet):
 class CachedAnalysisMeanShapeViewSet(BaseViewSet):
     queryset = models.CachedAnalysisMeanShape.objects.all()
     serializer_class = serializers.CachedAnalysisMeanShapeSerializer
+
+
+class CachedDeepSSMTestingDataViewSet(BaseViewSet):
+    queryset = models.CachedDeepSSMTestingData.objects.all()
+    serializer_class = serializers.CachedDeepSSMTestingDataSerializer
+
+
+class CachedDeepSSMTestingViewSet(BaseViewSet):
+    queryset = models.CachedDeepSSMTesting.objects.all()
+    serializer_class = serializers.CachedDeepSSMTestingSerializer
+
+
+class CachedDeepSSMTrainingViewSet(BaseViewSet):
+    queryset = models.CachedDeepSSMTraining.objects.all()
+    serializer_class = serializers.CachedDeepSSMTrainingSerializer
+
+
+class CachedDeepSSMAugPairViewSet(BaseViewSet):
+    queryset = models.CachedDeepSSMAugPair.objects.all()
+    serializer_class = serializers.CachedDeepSSMAugPairSerializer
+
+
+class CachedDeepSSMAugViewSet(BaseViewSet):
+    queryset = models.CachedDeepSSMAug.objects.all()
+
+    def get_serializer_class(self):
+        if self.request.method == 'GET':
+            return serializers.CachedDeepSSMAugReadSerializer
+        else:
+            return serializers.CachedDeepSSMAugModeSerializer
+
+
+class CachedDeepSSMViewSet(BaseViewSet):
+    queryset = models.CachedDeepSSM.objects.all()
+
+    def get_serializer_class(self):
+        if self.request.method == 'GET':
+            return serializers.CachedDeepSSMReadSerializer
+        else:
+            return serializers.CachedDeepSSMSerializer
 
 
 class ReconstructedSampleViewSet(

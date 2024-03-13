@@ -44,3 +44,19 @@ with swcc_session(base_url='http://localhost:8000/api/v1') as session:
         dataset=dataset_2,
     ).create()
     print('Done.')
+
+    print('Uploading deepsmm la dataset and project (with images).')
+    dataset_3 = Dataset(
+        name='DeepSSM la with Images',
+        description='deepssm dataset with images',
+        license='No license',
+        acknowledgement='No acknowledgement',
+    ).force_create()
+
+    project_file_3 = Path('deepssm_la/deepssm_la.swproj')
+    project_3 = Project(
+        file=project_file_3,
+        description='First project for deepssm la data',
+        dataset=dataset_3,
+    ).create()
+    print('Done.')

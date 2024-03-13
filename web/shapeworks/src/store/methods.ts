@@ -44,6 +44,7 @@ import {
     getReconstructedSamplesForProject,
     getTaskProgress,
     groomProject, optimizeProject, refreshProject,
+    deepssmRunProject,
 } from '@/api/rest';
 import { layers, COLORS } from "./constants";
 import { getDistance, hexToRgb } from "@/helper";
@@ -191,6 +192,8 @@ export async function spawnJob(action: string, payload: Record<string, any>): Pr
                 (l) => l !== 'Reconstructed'
             )
             return (await analyzeProject(projectId, payload as AnalysisParams))?.data
+        case 'deepssm_run':
+            return (await deepssmRunProject(projectId, payload))?.data
         default:
             break;
     }

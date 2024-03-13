@@ -143,6 +143,10 @@ export async function analyzeProject(projectId: number, params: AnalysisParams){
     return (await apiClient.post(`/projects/${projectId}/analyze/`, params))
 }
 
+export async function deepssmRunProject(projectId: number, formData: Record<string, any>) {
+    return (await apiClient.post(`/projects/${projectId}/deepssm-run/`, formData))
+}
+
 export async function getTaskProgress(taskId: number){
     return (await apiClient.get(`/task-progress/${taskId}`)).data
 }

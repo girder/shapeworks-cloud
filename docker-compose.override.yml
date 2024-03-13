@@ -4,7 +4,16 @@ services:
     build:
       context: .
       dockerfile: ./dev/django.Dockerfile
-    command: [ "./manage.py", "runserver", "0.0.0.0:8000" ]
+    command: [
+      "conda",
+      "run",
+      "--no-capture-output",
+      "-n",
+      "shapeworks",
+      "./manage.py", 
+      "runserver", 
+      "0.0.0.0:8000"
+    ]
     # Log printing via Rich is enhanced by a TTY
     tty: true
     env_file: ./dev/.env.docker-compose
@@ -24,10 +33,17 @@ services:
       dockerfile: ./dev/django.Dockerfile
     command:
       [
+        "conda",
+        "run",
+        "--no-capture-output",
+        "-n",
+        "shapeworks",
         "celery",
         "--app",
         "shapeworks_cloud.celery",
         "worker",
+        "-P",
+        "threads",
         "--loglevel",
         "INFO",
         "--without-heartbeat"
@@ -39,6 +55,7 @@ services:
       - .:/opt/django-project
     # Use host mode so that celery can use the localhost:8000 API in dev deployments
     network_mode: host
+    shm_size: 8gb
     depends_on:
       - postgres
       - rabbitmq
@@ -46,7 +63,11 @@ services:
 
   yarn:
     image: node:lts
-    command: [ "/bin/bash", "-c", "yarn install && yarn serve" ]
+    command: [ 
+      "/bin/bash",
+      "-c",
+      "yarn install && yarn serve"
+    ]
     env_file: ./dev/yarn.env
     environment:
       - NODE_OPTIONS=--openssl-legacy-provider

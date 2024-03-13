@@ -42,11 +42,75 @@ class CachedAnalysisSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
+class CachedDeepSSMTestingDataSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.CachedDeepSSMTestingData
+        fields = '__all__'
+
+
+class CachedDeepSSMTestingSerializer(serializers.ModelSerializer):
+    data = CachedDeepSSMTestingDataSerializer(many=True)
+
+    class Meta:
+        model = models.CachedDeepSSMTesting
+        fields = '__all__'
+
+
+class CachedDeepSSMTrainingSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.CachedDeepSSMTraining
+        fields = '__all__'
+
+
+class CachedDeepSSMAugPairSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.CachedDeepSSMAugPair
+        fields = '__all__'
+
+
+class CachedDeepSSMAugSerializer(serializers.ModelSerializer):
+    pairs = CachedDeepSSMAugPairSerializer(many=True)
+
+    class Meta:
+        model = models.CachedDeepSSMAug
+        fields = '__all__'
+
+
+class CachedDeepSSMSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.CachedDeepSSM
+        fields = '__all__'
+
+
 class ProjectSerializer(serializers.ModelSerializer):
     file = S3FileSerializerField(required=False)
 
     class Meta:
         model = models.Project
+        fields = '__all__'
+
+
+class CachedDeepSSMTestingReadSerializer(serializers.ModelSerializer):
+    data = CachedDeepSSMTestingDataSerializer(many=True)
+
+    class Meta:
+        model = models.CachedDeepSSMTesting
+        fields = '__all__'
+
+
+class CachedDeepSSMAugReadSerializer(serializers.ModelSerializer):
+    pairs = CachedDeepSSMAugPairSerializer(many=True)
+
+    class Meta:
+        model = models.CachedDeepSSMAug
+        fields = '__all__'
+
+
+class CachedDeepSSMReadSerializer(serializers.ModelSerializer):
+    augmentation = CachedDeepSSMAugSerializer()
+
+    class Meta:
+        model = models.CachedDeepSSM
         fields = '__all__'
 
 
@@ -71,6 +135,7 @@ class CachedAnalysisReadSerializer(serializers.ModelSerializer):
 class ProjectReadSerializer(serializers.ModelSerializer):
     file = S3FileSerializerField()
     last_cached_analysis = CachedAnalysisReadSerializer(allow_null=True)
+    last_cached_deep_ssm = CachedDeepSSMReadSerializer(allow_null=True)
     landmarks = LandmarksSerializer(many=True)
 
     class Meta:

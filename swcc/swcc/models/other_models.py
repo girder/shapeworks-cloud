@@ -171,6 +171,47 @@ class CachedAnalysis(ApiModel):
     good_bad_angles: List[list]
 
 
+class CachedDeepSSMTestingData(ApiModel):
+    _endpoint = 'cached-deepssm-testing-data'
+
+    mean_distance: Literal['core.CachedDeepSSMTestingData.mean_distance']
+    mesh: FileType[Literal['core.CachedDeepSSMTestingData.mesh']]
+    particles: FileType[Literal['core.CachedDeepSSMTestingData.particles']]
+
+
+class CachedDeepSSMTesting(ApiModel):
+    _endpoint = 'cached-deepssm-testing'
+
+    data: List[CachedDeepSSMTestingData]
+
+
+class CachedDeepSSMTraining(ApiModel):
+    _endpoint = 'cached-deepssm-training'
+
+    visualization: FileType[Literal['core.CachedDeepSSMTraining.visualization']]
+    data_table: FileType[Literal['core.CachedDeepSSMTraining.data_table']]
+
+
+class CachedDeepSSMAugPair(ApiModel):
+    _endpoint = 'cached-deepssm-aug-pair'
+
+    mesh: Literal['core.CachedDeepSSMAugPair.mesh']
+    particles: Literal['core.CachedDeepSSMAugPair.particles']
+
+
+class CachedDeepSSMAug(ApiModel):
+    _endpoint = 'cached-deepssm-aug'
+
+    pairs: List[CachedDeepSSMAugPair]
+    visualization: FileType[Literal['core.CachedDeepSSMAug.violin_plot']]
+
+
+class CachedDeepSSM(ApiModel):
+    _endpoint = 'cached-deep-ssm'
+
+    augmentation: CachedDeepSSMAug
+
+
 from .project import Project  # noqa: E402
 from .subject import Subject  # noqa: E402
 

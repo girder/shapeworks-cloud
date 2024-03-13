@@ -19,18 +19,30 @@ class Dataset(TimeStampedModel, models.Model):
     contributors = models.TextField(blank=True, default='')
     publications = models.TextField(blank=True, default='')
 
-    def get_contents(self):
+    def get_contents(self, type='all'):
         ret = []
 
         def truncate_filename(filename):
             return filename.split('/')[-1]
 
-        for shape_group in [
-            Segmentation.objects.filter(subject__dataset=self),
-            Mesh.objects.filter(subject__dataset=self),
-            Image.objects.filter(subject__dataset=self),
-            Contour.objects.filter(subject__dataset=self),
-        ]:
+        if type == 'all':
+            group_list = [
+                Segmentation.objects.filter(subject__dataset=self),
+                Mesh.objects.filter(subject__dataset=self),
+                Image.objects.filter(subject__dataset=self),
+                Contour.objects.filter(subject__dataset=self),
+            ]
+        elif type == 'shape':
+            group_list = [
+                Segmentation.objects.filter(subject__dataset=self),
+                Mesh.objects.filter(subject__dataset=self),
+            ]
+        elif type == 'image':
+            group_list = [Image.objects.filter(subject__dataset=self)]
+        elif type == 'contour':
+            group_list = [Contour.objects.filter(subject__dataset=self)]
+
+        for shape_group in group_list:
             for shape in shape_group:
                 ret.append(
                     {
@@ -108,6 +120,37 @@ class CachedAnalysis(TimeStampedModel, models.Model):
     good_bad_angles = models.JSONField(default=list)
 
 
+class CachedDeepSSMTestingData(models.Model):
+    mean_distance = models.FloatField()
+    mesh = S3FileField()
+    particles = S3FileField()
+
+
+class CachedDeepSSMTesting(models.Model):
+    data = models.ManyToManyField(CachedDeepSSMTestingData)
+
+
+class CachedDeepSSMTraining(models.Model):
+    visualization = S3FileField()  # .png
+    data_table = S3FileField()  # .csv
+
+
+class CachedDeepSSMAugPair(models.Model):
+    mesh = S3FileField()
+    particles = S3FileField()
+
+
+class CachedDeepSSMAug(models.Model):
+    visualization = S3FileField()  # .png
+    pairs = models.ManyToManyField(CachedDeepSSMAugPair)
+
+
+class CachedDeepSSM(TimeStampedModel, models.Model):
+    augmentation = models.ForeignKey(CachedDeepSSMAug, on_delete=models.CASCADE)
+    training = models.ForeignKey(CachedDeepSSMTraining, null=True, on_delete=models.CASCADE)
+    testing = models.ForeignKey(CachedDeepSSMTesting, null=True, on_delete=models.CASCADE)
+
+
 class Project(TimeStampedModel, models.Model):
     file = S3FileField()
     name = models.CharField(max_length=255)
@@ -124,6 +167,11 @@ class Project(TimeStampedModel, models.Model):
         on_delete=models.SET_NULL,
         null=True,
     )
+    last_cached_deepssm = models.ForeignKey(
+        CachedDeepSSM,
+        on_delete=models.SET_NULL,
+        null=True,
+    )
 
     def create_new_file(self):
         file_contents = {
@@ -136,10 +184,12 @@ class Project(TimeStampedModel, models.Model):
         )
 
     def get_download_paths(self):
+        print('get_download_paths')
         ret = {}
         with self.file.open() as f:
             data = json.load(f)['data']
 
+        print(data)
         for subject_info in data:
             subject = Subject.objects.filter(
                 dataset=self.dataset, name=subject_info['name']
@@ -150,7 +200,7 @@ class Project(TimeStampedModel, models.Model):
                     'mesh': [(m.anatomy_type, m.file) for m in subject.meshes.all()],
                     'segmentation': [(s.anatomy_type, s.file) for s in subject.segmentations.all()],
                     'contour': [(c.anatomy_type, c.file) for c in subject.contours.all()],
-                    'image': [(i.anatomy_type, i.file) for i in subject.images.all()],
+                    'image': [(i.modality, i.file) for i in subject.images.all()],
                     'constraints': [(c.anatomy_type, c.file) for c in subject.constraints.all()],
                     'landmarks': [
                         (lm.anatomy_type, lm.file)

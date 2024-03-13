@@ -7,6 +7,7 @@ from .models import (
     CachedAnalysisMeanShape,
     CachedAnalysisMode,
     CachedAnalysisModePCA,
+    CachedDeepSSM,
     Project,
 )
 
@@ -20,3 +21,8 @@ def delete_cached_analysis(sender, instance, using, **kwargs):
     CachedAnalysis.objects.filter(project=instance).delete()
     CachedAnalysisGroup.objects.filter(cachedanalysis__project=instance).delete()
     CachedAnalysisMeanShape.objects.filter(cachedanalysis__project=instance).delete()
+
+
+@receiver(pre_delete, sender=Project)
+def delete_cached_deepssm(sender, instance, using, **kwargs):
+    CachedDeepSSM.objects.filter(project=instance).delete()
