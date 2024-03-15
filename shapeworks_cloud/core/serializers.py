@@ -142,7 +142,6 @@ class CachedAnalysisReadSerializer(serializers.ModelSerializer):
 class ProjectReadSerializer(serializers.ModelSerializer):
     file = S3FileSerializerField()
     last_cached_analysis = CachedAnalysisReadSerializer(allow_null=True)
-    last_cached_deep_ssm = CachedDeepSSMReadSerializer(allow_null=True)
     landmarks = LandmarksSerializer(many=True)
 
     class Meta:

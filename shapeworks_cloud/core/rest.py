@@ -522,7 +522,7 @@ class CachedDeepSSMAugViewSet(BaseViewSet):
 
 
 class CachedDeepSSMResultViewSet(BaseViewSet):
-    queryset = models.CachedDeepSSM.objects.all()
+    queryset = models.CachedDeepSSMResult.objects.all()
 
     def get_serializer_class(self):
         if self.request.method == 'GET':
