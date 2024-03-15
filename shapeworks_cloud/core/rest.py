@@ -411,7 +411,6 @@ class ProjectViewSet(BaseViewSet):
         )
         pass
 
-    # TODO: ADJUST FOR PHASE 2/3
     @action(
         detail=True,
         url_path='deepssm-run',
@@ -522,14 +521,14 @@ class CachedDeepSSMAugViewSet(BaseViewSet):
             return serializers.CachedDeepSSMAugModeSerializer
 
 
-class CachedDeepSSMViewSet(BaseViewSet):
+class CachedDeepSSMResultViewSet(BaseViewSet):
     queryset = models.CachedDeepSSM.objects.all()
 
     def get_serializer_class(self):
         if self.request.method == 'GET':
-            return serializers.CachedDeepSSMReadSerializer
+            return serializers.CachedDeepSSMResultReadSerializer
         else:
-            return serializers.CachedDeepSSMSerializer
+            return serializers.CachedDeepSSMResultSerializer
 
 
 class ReconstructedSampleViewSet(

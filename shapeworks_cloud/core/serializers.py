@@ -43,42 +43,47 @@ class CachedAnalysisSerializer(serializers.ModelSerializer):
 
 
 class CachedDeepSSMTestingDataSerializer(serializers.ModelSerializer):
+    mesh = S3FileSerializerField()
+    particles = S3FileSerializerField()
+
     class Meta:
         model = models.CachedDeepSSMTestingData
         fields = '__all__'
 
 
 class CachedDeepSSMTestingSerializer(serializers.ModelSerializer):
-    data = CachedDeepSSMTestingDataSerializer(many=True)
-
     class Meta:
         model = models.CachedDeepSSMTesting
         fields = '__all__'
 
 
 class CachedDeepSSMTrainingSerializer(serializers.ModelSerializer):
+    visualization = S3FileSerializerField()
+    data_table = S3FileSerializerField()
+
     class Meta:
         model = models.CachedDeepSSMTraining
         fields = '__all__'
 
 
 class CachedDeepSSMAugPairSerializer(serializers.ModelSerializer):
+    mesh = S3FileSerializerField()
+    particles = S3FileSerializerField()
+
     class Meta:
         model = models.CachedDeepSSMAugPair
         fields = '__all__'
 
 
 class CachedDeepSSMAugSerializer(serializers.ModelSerializer):
-    pairs = CachedDeepSSMAugPairSerializer(many=True)
-
     class Meta:
         model = models.CachedDeepSSMAug
         fields = '__all__'
 
 
-class CachedDeepSSMSerializer(serializers.ModelSerializer):
+class CachedDeepSSMResultSerializer(serializers.ModelSerializer):
     class Meta:
-        model = models.CachedDeepSSM
+        model = models.CachedDeepSSMResult
         fields = '__all__'
 
 
@@ -91,7 +96,7 @@ class ProjectSerializer(serializers.ModelSerializer):
 
 
 class CachedDeepSSMTestingReadSerializer(serializers.ModelSerializer):
-    data = CachedDeepSSMTestingDataSerializer(many=True)
+    data = CachedDeepSSMTestingDataSerializer()
 
     class Meta:
         model = models.CachedDeepSSMTesting
@@ -99,18 +104,20 @@ class CachedDeepSSMTestingReadSerializer(serializers.ModelSerializer):
 
 
 class CachedDeepSSMAugReadSerializer(serializers.ModelSerializer):
-    pairs = CachedDeepSSMAugPairSerializer(many=True)
+    pair = CachedDeepSSMAugPairSerializer()
 
     class Meta:
         model = models.CachedDeepSSMAug
         fields = '__all__'
 
 
-class CachedDeepSSMReadSerializer(serializers.ModelSerializer):
+class CachedDeepSSMResultReadSerializer(serializers.ModelSerializer):
     augmentation = CachedDeepSSMAugSerializer()
+    training = CachedDeepSSMTrainingSerializer()
+    testing = CachedDeepSSMTestingReadSerializer()
 
     class Meta:
-        model = models.CachedDeepSSM
+        model = models.CachedDeepSSMResult
         fields = '__all__'
 
 

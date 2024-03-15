@@ -219,7 +219,7 @@ class CachedDeepSSMTesting(models.Model):
     project = models.ForeignKey(
         Project, on_delete=models.CASCADE, related_name='deepssm_testing'
     )
-    testing_data = models.ForeignKey(CachedDeepSSMTestingData, on_delete=models.CASCADE)
+    data = models.ForeignKey(CachedDeepSSMTestingData, on_delete=models.CASCADE)
 
 
 class CachedDeepSSMTraining(models.Model):
@@ -241,7 +241,7 @@ class CachedDeepSSMAug(models.Model):
         Project, on_delete=models.CASCADE, related_name='deepssm_aug'
     )
     visualization = S3FileField()  # .png
-    aug_pair = models.ForeignKey(CachedDeepSSMAugPair, on_delete=models.CASCADE)
+    pair = models.ForeignKey(CachedDeepSSMAugPair, on_delete=models.CASCADE)
 
 
 class CachedDeepSSMResult(TimeStampedModel, models.Model):
@@ -250,7 +250,7 @@ class CachedDeepSSMResult(TimeStampedModel, models.Model):
     )
     augmentation = models.ForeignKey(CachedDeepSSMAug, on_delete=models.CASCADE)
     training = models.ForeignKey(CachedDeepSSMTraining, null=True, on_delete=models.CASCADE)
-    testing = models.ForeignKey(CachedDeepSSMTestingData, null=True, on_delete=models.CASCADE)
+    testing = models.ForeignKey(CachedDeepSSMTesting, null=True, on_delete=models.CASCADE)
 
 
 class GroomedSegmentation(TimeStampedModel, models.Model):
