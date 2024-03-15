@@ -37,7 +37,6 @@ def interpret_deepssm_form_data(data: Dict) -> Dict:
     data['aug_sampler_type'] = data['samplerType']
 
     # Training
-    # TODO: review param names with swproj file from studio
     data['train_loss_function'] = data['lossFunction']
     data['train_epochs'] = data['epochs']
     data['train_learning_rate'] = data['learningRate']
@@ -245,16 +244,6 @@ def run_testing(params, project, download_dir):
     # /////////////////////////////////////////////////////////////////
     DeepSSMUtils.testDeepSSM(config_file)
 
-    # print config_file's contents
-    with open(config_file, 'r') as json_file:
-        json_object = json.load(json_file)
-
-    print(json.dumps(json_object))
-    print('=====================')
-    print(os.listdir(download_dir + "/groomed/"))
-    print('=====================')
-    print(os.listdir(download_dir + "/deepssm/"))
-
     DeepSSMUtils.process_test_predictions(project, config_file)
 
 
@@ -329,6 +318,8 @@ def run_deepssm_command(
 
             os.chdir('../../')
             # TODO: output relevant results
+            print("results")
+            print(project, download_dir, result_data, project_filename)
             post_command_function(project, download_dir, result_data, project_filename)
             progress.update_percentage(100)
 
@@ -336,39 +327,13 @@ def run_deepssm_command(
 @shared_task
 def deepssm_run(user_id, project_id, progress_id, form_data):
     def pre_command_function():
-        # TODO: add removal of all previous results for new db entries
-
-        # project = models.Project.objects.get(id=project_id)
+        project = models.Project.objects.get(id=project_id)
 
         # delete any previous results.
-        # Augmentation is the first step so should remove all cached deepssm data
-        # models.CachedPrediction.objects.filter(
-        #     ft_predictions__cacheddeepssm__project=project
-        # ).delete()
-        # models.CachedPrediction.objects.filter(
-        #     pca_predictions__cacheddeepssm__project=project
-        # ).delete()
-        # models.CachedExample.objects.filter(
-        #     best__cachedmodel__cacheddeepssm__project=project
-        # ).delete()
-        # models.CachedExample.objects.filter(
-        #     median__cachedmodel__cacheddeepssm__project=project
-        # ).delete()
-        # models.CachedExample.objects.filter(
-        #     worst__cachedmodel__cacheddeepssm__project=project
-        # ).delete()
-        # models.CachedModelExamples.objects.filter(
-        #     cachedmodel__cacheddeepssm__project=project
-        # ).delete()
-        # models.CachedModel.objects.filter(cacheddeepssm__project=project).delete()
-        # models.CachedTensors.objects.filter(tensors__cacheddeepssm__project=project).delete()
-        # models.CachedDataLoaders.objects.filter(cacheddeepssm__project=project).delete()
-        # models.CachedAugmentationPair.objects.filter(
-        #     cachedaugmentation__cacheddeepssm__project=project
-        # ).delete()
-        # models.CachedAugmentation.objects.filter(cacheddeepssm__project=project).delete()
-        # models.CachedDeepSSM.objects.filter(project=project).delete()
-        pass
+        models.CachedDeepSSMTesting.objects.filter(project=project).delete()
+        models.CachedDeepSSMTraining.objects.filter(project=project).delete()
+        models.CachedDeepSSMAug.objects.filter(project=project).delete()
+        models.CachedDeepSSMResult.objects.filter(project=project).delete()
 
     def post_command_function(project, download_dir, result_data, project_filename):
         print(result_data)
