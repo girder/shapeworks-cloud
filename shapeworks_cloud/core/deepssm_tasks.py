@@ -49,7 +49,7 @@ def interpret_deepssm_form_data(data: Dict) -> Dict:
     return data
 
 
-def run_prep(params, project, project_file):
+def run_prep(params, project, project_file, progress):
     # //////////////////////////////////////////////
     # /// STEP 1: Create Split
     # //////////////////////////////////////////////
@@ -59,6 +59,7 @@ def run_prep(params, project, project_file):
     # test_split = project.get_parameters('testing_split')
     train_split = 100.0 - val_split - test_split
     DeepSSMUtils.create_split(project, train_split, val_split, test_split)
+    progress.update_percentage(5)
 
     # /////////////////////////////////////////////////////////////////
     # /// STEP 2: Groom Training Shapes
@@ -67,16 +68,6 @@ def run_prep(params, project, project_file):
     params.set("alignment_method", "Iterative Closest Point")
     params.set("alignment_enabled", "true")
     project.set_parameters("groom", params)
-
-    print("project path", project.get_project_path())
-
-    with Popen(
-        ["ls", "-a", "distance_transforms/"],
-        stdout=PIPE,
-        stderr=PIPE,
-        cwd=project.get_project_path(),
-    ) as proc:
-        print(proc.stdout.read().decode("utf-8"))
 
     DeepSSMUtils.groom_training_shapes(project)
     project.save(project_file)
@@ -93,6 +84,7 @@ def run_prep(params, project, project_file):
 
     DeepSSMUtils.optimize_training_particles(project)
     project.save(project_file)
+    progress.update_percentage(12)
 
     # /////////////////////////////////////////////////////////////////
     # /// STEP 4: Groom Training Images
@@ -109,6 +101,7 @@ def run_prep(params, project, project_file):
     val_test_indices = val_indices + test_indices
     DeepSSMUtils.groom_val_test_images(project, val_test_indices)
     project.save(project_file)
+    progress.update_percentage(14)
 
     # /////////////////////////////////////////////////////////////////
     # /// STEP 6: Optimize Validation Particles with Fixed Domains
@@ -126,15 +119,17 @@ def run_prep(params, project, project_file):
 
     DeepSSMUtils.groom_validation_shapes(project)
     project.save(project_file)
+    progress.update_percentage(17)
 
     optimize = sw.Optimize()
     optimize.SetUpOptimize(project)
     optimize.Run()
 
     project.save(project_file)
+    progress.update_percentage(20)
 
 
-def run_augmentation(params, project, download_dir):
+def run_augmentation(params, project, download_dir, progress):
     # /////////////////////////////////////////////////////////////////
     # /// STEP 7: Augment Data
     # /////////////////////////////////////////////////////////////////
@@ -154,18 +149,18 @@ def run_augmentation(params, project, download_dir):
         mixture_num=0,
         processes=1,  # Thread count
     )
+    progress.update_percentage(25)
 
     aug_dir = download_dir + "/deepssm/augmentation/"
     aug_data_csv = aug_dir + "TotalData.csv"
 
-    # print(os.listdir(aug_data_csv))
-    print(os.listdir(aug_dir))
-    # TODO: return this? How should this be saved?
     DataAugmentationUtils.visualizeAugmentation(aug_data_csv, "violin")
+    progress.update_percentage(30)
+
     return embedded_dims
 
 
-def run_training(params, project, download_dir, aug_dims):
+def run_training(params, project, download_dir, aug_dims, progress):
     batch_size = int(params['train_batch_size'])
 
     # /////////////////////////////////////////////////////////////////
@@ -173,6 +168,7 @@ def run_training(params, project, download_dir, aug_dims):
     # /////////////////////////////////////////////////////////////////
     DeepSSMUtils.prepare_data_loaders(project, batch_size, "train")
     DeepSSMUtils.prepare_data_loaders(project, batch_size, "val")
+    progress.update_percentage(35)
 
     # /////////////////////////////////////////////////////////////////
     # /// STEP 9: Train DeepSSM Model
@@ -207,17 +203,20 @@ def run_training(params, project, download_dir, aug_dims):
         fine_tune_learning_rate,
         loss_function,
     )
+    progress.update_percentage(40)
 
     DeepSSMUtils.trainDeepSSM(config_file)
+    progress.update_percentage(50)
 
 
-def run_testing(params, project, download_dir):
+def run_testing(params, project, download_dir, progress):
     test_indices = DeepSSMUtils.get_split_indices(project, "test")
 
     # /////////////////////////////////////////////////////////////////
     # /// STEP 10: Groom Testing Images
     # /////////////////////////////////////////////////////////////////
     DeepSSMUtils.groom_val_test_images(project, test_indices)
+    progress.update_percentage(55)
 
     # /////////////////////////////////////////////////////////////////
     # /// STEP 11: Prepare Test Data PyTorch Loaders
@@ -234,6 +233,7 @@ def run_testing(params, project, download_dir):
         file.write("]")
 
     config_file = download_dir + "/deepssm/configuration.json"
+    progress.update_percentage(60)
 
     # /////////////////////////////////////////////////////////////////
     # /// STEP 12: Test DeepSSM Model
@@ -241,6 +241,7 @@ def run_testing(params, project, download_dir):
     DeepSSMUtils.testDeepSSM(config_file)
 
     DeepSSMUtils.process_test_predictions(project, config_file)
+    progress.update_percentage(90)
 
 
 # TODO: implement all steps
@@ -298,12 +299,9 @@ def run_deepssm_command(
             sw_project.load(sw_project_file)
 
             os.chdir(sw_project.get_project_path())
-            # TODO: pass progress through and update percentage per step?
-            run_prep(form_data, sw_project, sw_project_file)
-            progress.update_percentage(20)
+            run_prep(form_data, sw_project, sw_project_file, progress)
 
-            aug_dims = run_augmentation(form_data, sw_project, download_dir)
-            progress.update_percentage(30)
+            aug_dims = run_augmentation(form_data, sw_project, download_dir, progress)
 
             # result data has paths to files
             result_data["augmentation"] = {
@@ -317,8 +315,7 @@ def run_deepssm_command(
                 ),
             }
 
-            run_training(form_data, sw_project, download_dir, aug_dims)
-            progress.update_percentage(50)
+            run_training(form_data, sw_project, download_dir, aug_dims, progress)
 
             result_data["training"] = {
                 "train_log": download_dir + "/deepssm/model/train_log.csv",
@@ -328,8 +325,7 @@ def run_deepssm_command(
                 "val_and_test_images": os.listdir(download_dir + "/deepssm/val_and_test_images/"),
             }
 
-            run_testing(form_data, sw_project, download_dir)
-            progress.update_percentage(90)
+            run_testing(form_data, sw_project, download_dir, progress)
 
             result_data["testing"] = {
                 "world_predictions": os.listdir(
@@ -359,8 +355,6 @@ def deepssm_run(user_id, project_id, progress_id, form_data):
         models.DeepSSMTestingData.objects.filter(project=project).delete()
 
     def post_command_function(project, download_dir, result_data, project_filename):
-        print(result_data)
-        # TODO: save relevant result data to db (models)
         # save project file changes to database
         project.file.save(
             project_filename,
