@@ -55,33 +55,28 @@ router.register('task-progress', rest.TaskProgressViewSet, basename='task_progre
 # DeepSSM
 # ----------------
 router.register(
-    'cached-deepssm-testing-data',
-    rest.CachedDeepSSMTestingDataViewSet,
-    basename='cached_deepssm_testing_data',
+    'deepssm-testing-data',
+    rest.DeepSSMTestingDataViewSet,
+    basename='deepssm_testing_data',
 )
 
 router.register(
-    'cached-deepssm-testing',
-    rest.CachedDeepSSMTestingViewSet,
-    basename='cached_deepssm_testing',
+    'deepssm-training-image',
+    rest.DeepSSMTrainingImageViewSet,
+    basename='deepssm_training_image',
 )
 
 router.register(
-    'cached-deepssm-training',
-    rest.CachedDeepSSMTrainingViewSet,
-    basename='cached_deepssm_training',
+    'deepssm-aug-pair',
+    rest.DeepSSMAugPairViewSet,
+    basename='deepssm_aug_pair',
 )
+
 router.register(
-    'cached-deepssm-aug-pair',
-    rest.CachedDeepSSMAugPairViewSet,
-    basename='cached_deepssm_aug',
+    'deepssm-result',
+    rest.DeepSSMResultViewSet,
+    basename='deepssm_result',
 )
-router.register(
-    'cached-deepssm-aug',
-    rest.CachedDeepSSMAugViewSet,
-    basename='cached_deepssm_aug',
-)
-router.register('cached-deep-ssm', rest.CachedDeepSSMViewSet, basename='cached_deep_ssm')
 
 # OpenAPI generation
 schema_view = get_schema_view(

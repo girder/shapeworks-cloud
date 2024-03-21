@@ -140,3 +140,35 @@ class ReconstructedSampleFilter(FilterSet):
     class Meta:
         models = models.ReconstructedSample
         fields = ['project']
+
+
+class DeepSSMTestingDataFilter(FilterSet):
+    project = ModelChoiceFilter(queryset=models.Project.objects.all())
+
+    class Meta:
+        models = models.DeepSSMTestingData
+        fields = ['project']
+
+
+class DeepSSMTrainingImageFilter(FilterSet):
+    project = ModelChoiceFilter(queryset=models.Project.objects.all())
+
+    class Meta:
+        models = models.DeepSSMTrainingImage
+        fields = ['project']
+
+
+class DeepSSMAugPairFilter(FilterSet):
+    project = ModelChoiceFilter(queryset=models.Project.objects.all())
+
+    class Meta:
+        models = models.DeepSSMAugPair
+        fields = ['project']
+
+
+class DeepSSMResultFilter(FilterSet):
+    project = ModelChoiceFilter(queryset=models.Project.objects.all())
+
+    class Meta:
+        models = models.DeepSSMResult
+        fields = ['project']

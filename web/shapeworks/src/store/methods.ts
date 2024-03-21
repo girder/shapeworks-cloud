@@ -154,6 +154,13 @@ export const loadReconstructedSamplesForProject = async (type: string, id: numbe
     }
 }
 
+export const loadDeepSSMDataForProject = async (id: number) => {
+    // TODO: implement
+    if (selectedProject.value) {
+        return;
+    }
+}
+
 export function jobAlreadyDone(action: string): Boolean {
     let layer;
     switch (action) {
@@ -192,7 +199,7 @@ export async function spawnJob(action: string, payload: Record<string, any>): Pr
                 (l) => l !== 'Reconstructed'
             )
             return (await analyzeProject(projectId, payload as AnalysisParams))?.data
-        case 'deepssm_run':
+        case 'deepssm':
             return (await deepssmRunProject(projectId, payload))?.data
         default:
             break;
@@ -261,6 +268,10 @@ export async function fetchJobResults(taskName: string) {
                     goodBadAngles.value = analysis.value.good_bad_angles
                 }
             }
+            break;
+        case 'deepssm':
+            layerName = 'Groomed'
+            loadFunction = loadDeepSSMDataForProject
             break;
     }
     if (layerName && loadFunction) {

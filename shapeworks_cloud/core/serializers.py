@@ -42,51 +42,6 @@ class CachedAnalysisSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-class CachedDeepSSMTestingDataSerializer(serializers.ModelSerializer):
-    mesh = S3FileSerializerField()
-    particles = S3FileSerializerField()
-
-    class Meta:
-        model = models.CachedDeepSSMTestingData
-        fields = '__all__'
-
-
-class CachedDeepSSMTestingSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = models.CachedDeepSSMTesting
-        fields = '__all__'
-
-
-class CachedDeepSSMTrainingSerializer(serializers.ModelSerializer):
-    visualization = S3FileSerializerField()
-    data_table = S3FileSerializerField()
-
-    class Meta:
-        model = models.CachedDeepSSMTraining
-        fields = '__all__'
-
-
-class CachedDeepSSMAugPairSerializer(serializers.ModelSerializer):
-    mesh = S3FileSerializerField()
-    particles = S3FileSerializerField()
-
-    class Meta:
-        model = models.CachedDeepSSMAugPair
-        fields = '__all__'
-
-
-class CachedDeepSSMAugSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = models.CachedDeepSSMAug
-        fields = '__all__'
-
-
-class CachedDeepSSMResultSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = models.CachedDeepSSMResult
-        fields = '__all__'
-
-
 class ProjectSerializer(serializers.ModelSerializer):
     file = S3FileSerializerField(required=False)
 
@@ -95,29 +50,95 @@ class ProjectSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-class CachedDeepSSMTestingReadSerializer(serializers.ModelSerializer):
-    data = CachedDeepSSMTestingDataSerializer()
+class DeepSSMTestingDataSerializer(serializers.ModelSerializer):
+    project = ProjectSerializer()
+    image_type = serializers.CharField(max_length=255)
+    image_id = serializers.IntegerField()
+    mesh = S3FileSerializerField()
+    particles = S3FileSerializerField()
 
     class Meta:
-        model = models.CachedDeepSSMTesting
+        model = models.DeepSSMTestingData
         fields = '__all__'
 
 
-class CachedDeepSSMAugReadSerializer(serializers.ModelSerializer):
-    pair = CachedDeepSSMAugPairSerializer()
+class DeepSSMTrainingImageSerializer(serializers.ModelSerializer):
+    project = ProjectSerializer()
+    image = S3FileSerializerField()
+    validation = serializers.BooleanField()
 
     class Meta:
-        model = models.CachedDeepSSMAug
+        model = models.DeepSSMTrainingImage
         fields = '__all__'
 
 
-class CachedDeepSSMResultReadSerializer(serializers.ModelSerializer):
-    augmentation = CachedDeepSSMAugSerializer()
-    training = CachedDeepSSMTrainingSerializer()
-    testing = CachedDeepSSMTestingReadSerializer()
+class DeepSSMAugPairSerializer(serializers.ModelSerializer):
+    project = ProjectSerializer()
+    sample_num = serializers.IntegerField()
+    mesh = S3FileSerializerField()
+    particles = S3FileSerializerField()
 
     class Meta:
-        model = models.CachedDeepSSMResult
+        model = models.DeepSSMAugPair
+        fields = '__all__'
+
+
+class DeepSSMResultSerializer(serializers.ModelSerializer):
+    project = ProjectSerializer()
+    aug_visualization = S3FileSerializerField()
+    training_visualization = S3FileSerializerField()
+    training_visualization_ft = S3FileSerializerField()
+    training_data_table = S3FileSerializerField()
+    testing_distances = S3FileSerializerField()
+
+    class Meta:
+        model = models.DeepSSMResult
+        fields = '__all__'
+
+
+class DeepSSMTestingDataReadSerializer(serializers.ModelSerializer):
+    project = ProjectSerializer()
+    image_type = serializers.CharField(max_length=255)
+    image_id = serializers.IntegerField()
+    mesh = S3FileSerializerField()
+    particles = S3FileSerializerField()
+
+    class Meta:
+        model = models.DeepSSMTestingData
+        fields = '__all__'
+
+
+class DeepSSMTrainingImageReadSerializer(serializers.ModelSerializer):
+    project = ProjectSerializer()
+    image = S3FileSerializerField()
+    validation = serializers.BooleanField()
+
+    class Meta:
+        model = models.DeepSSMTrainingImage
+        fields = '__all__'
+
+
+class DeepSSMAugPairReadSerializer(serializers.ModelSerializer):
+    project = ProjectSerializer()
+    mesh = S3FileSerializerField()
+    particles = S3FileSerializerField()
+    sample_num = serializers.IntegerField()
+
+    class Meta:
+        model = models.DeepSSMAugPair
+        fields = '__all__'
+
+
+class DeepSSMResultReadSerializer(serializers.ModelSerializer):
+    project = ProjectSerializer()
+    aug_visualization = S3FileSerializerField()
+    training_visualization = S3FileSerializerField()
+    training_visualization_ft = S3FileSerializerField()
+    training_data_table = S3FileSerializerField()
+    testing_distances = S3FileSerializerField()
+
+    class Meta:
+        model = models.DeepSSMResult
         fields = '__all__'
 
 

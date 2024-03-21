@@ -208,49 +208,38 @@ class Project(TimeStampedModel, models.Model):
         return ret
 
 
-class CachedDeepSSMTestingData(models.Model):
-    subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
-    mean_distance = models.FloatField()
+class DeepSSMTestingData(models.Model):
+    project = models.ForeignKey(
+        Project, on_delete=models.CASCADE, related_name='deepssm_testing_data'
+    )
+    image_type = models.CharField(max_length=255)
+    image_id = models.IntegerField()
     mesh = S3FileField()
     particles = S3FileField()
 
 
-class CachedDeepSSMTesting(models.Model):
+class DeepSSMTrainingImage(models.Model):
     project = models.ForeignKey(
-        Project, on_delete=models.CASCADE, related_name='deepssm_testing'
+        Project, on_delete=models.CASCADE, related_name='deepssm_training_images'
     )
-    data = models.ForeignKey(CachedDeepSSMTestingData, on_delete=models.CASCADE)
+    image = S3FileField()
+    validation = models.BooleanField(default=False)
 
 
-class CachedDeepSSMTraining(models.Model):
-    project = models.ForeignKey(
-        Project, on_delete=models.CASCADE, related_name='deepssm_training'
-    )
-    visualization = S3FileField()  # .png
-    data_table = S3FileField()  # .csv
-
-
-class CachedDeepSSMAugPair(models.Model):
-    subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
+class DeepSSMAugPair(models.Model):
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='deepssm_aug_pair')
+    sample_num = models.IntegerField()
     mesh = S3FileField()
     particles = S3FileField()
 
 
-class CachedDeepSSMAug(models.Model):
-    project = models.ForeignKey(
-        Project, on_delete=models.CASCADE, related_name='deepssm_aug'
-    )
-    visualization = S3FileField()  # .png
-    pair = models.ForeignKey(CachedDeepSSMAugPair, on_delete=models.CASCADE)
-
-
-class CachedDeepSSMResult(TimeStampedModel, models.Model):
-    project = models.ForeignKey(
-        Project, on_delete=models.CASCADE, related_name='cached_deepssm'
-    )
-    augmentation = models.ForeignKey(CachedDeepSSMAug, on_delete=models.CASCADE)
-    training = models.ForeignKey(CachedDeepSSMTraining, null=True, on_delete=models.CASCADE)
-    testing = models.ForeignKey(CachedDeepSSMTesting, null=True, on_delete=models.CASCADE)
+class DeepSSMResult(models.Model):
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='deepssm_results')
+    aug_visualization = S3FileField()  # .png
+    training_visualization = S3FileField()  # .png
+    training_visualization_ft = S3FileField()  # .png
+    training_data_table = S3FileField()  # .csv
+    testing_distances = S3FileField()  # .csv
 
 
 class GroomedSegmentation(TimeStampedModel, models.Model):

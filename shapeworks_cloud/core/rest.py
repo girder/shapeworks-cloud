@@ -409,7 +409,6 @@ class ProjectViewSet(BaseViewSet):
             },
             status=status.HTTP_200_OK,
         )
-        pass
 
     @action(
         detail=True,
@@ -433,6 +432,9 @@ class ProjectViewSet(BaseViewSet):
 
         deepssm_run.delay(request.user.id, project.id, deepssm_progress.id, form_data)
         return Response(
+            data={
+                'deepssm_task': serializers.TaskProgressSerializer(deepssm_progress).data,
+            },
             status=status.HTTP_200_OK,
         )
 
@@ -491,44 +493,48 @@ class CachedAnalysisMeanShapeViewSet(BaseViewSet):
     serializer_class = serializers.CachedAnalysisMeanShapeSerializer
 
 
-class CachedDeepSSMTestingDataViewSet(BaseViewSet):
-    queryset = models.CachedDeepSSMTestingData.objects.all()
-    serializer_class = serializers.CachedDeepSSMTestingDataSerializer
-
-
-class CachedDeepSSMTestingViewSet(BaseViewSet):
-    queryset = models.CachedDeepSSMTesting.objects.all()
-    serializer_class = serializers.CachedDeepSSMTestingSerializer
-
-
-class CachedDeepSSMTrainingViewSet(BaseViewSet):
-    queryset = models.CachedDeepSSMTraining.objects.all()
-    serializer_class = serializers.CachedDeepSSMTrainingSerializer
-
-
-class CachedDeepSSMAugPairViewSet(BaseViewSet):
-    queryset = models.CachedDeepSSMAugPair.objects.all()
-    serializer_class = serializers.CachedDeepSSMAugPairSerializer
-
-
-class CachedDeepSSMAugViewSet(BaseViewSet):
-    queryset = models.CachedDeepSSMAug.objects.all()
+class DeepSSMTestingDataViewSet(BaseViewSet):
+    queryset = models.DeepSSMTestingData.objects.all()
+    filterset_class = filters.DeepSSMTestingDataFilter
 
     def get_serializer_class(self):
         if self.request.method == 'GET':
-            return serializers.CachedDeepSSMAugReadSerializer
+            return serializers.DeepSSMTestingDataReadSerializer
         else:
-            return serializers.CachedDeepSSMAugModeSerializer
+            return serializers.DeepSSMTestingDataSerializer
 
 
-class CachedDeepSSMResultViewSet(BaseViewSet):
-    queryset = models.CachedDeepSSMResult.objects.all()
+class DeepSSMTrainingImageViewSet(BaseViewSet):
+    queryset = models.DeepSSMTrainingImage.objects.all()
+    filterset_class = filters.DeepSSMTrainingImageFilter
+
+    def get_serializer_class(self) -> BaseSerializer:
+        if self.request.method == 'GET':
+            return serializers.DeepSSMTrainingImageReadSerializer
+        else:
+            return serializers.DeepSSMTrainingImageSerializer
+
+
+class DeepSSMAugPairViewSet(BaseViewSet):
+    queryset = models.DeepSSMAugPair.objects.all()
+    filterset_class = filters.DeepSSMAugPairFilter
 
     def get_serializer_class(self):
         if self.request.method == 'GET':
-            return serializers.CachedDeepSSMResultReadSerializer
+            return serializers.DeepSSMAugPairReadSerializer
         else:
-            return serializers.CachedDeepSSMResultSerializer
+            return serializers.DeepSSMAugPairSerializer
+
+
+class DeepSSMResultViewSet(BaseViewSet):
+    queryset = models.DeepSSMResult.objects.all()
+    filterset_class = filters.DeepSSMResultFilter
+
+    def get_serializer_class(self):
+        if self.request.method == 'GET':
+            return serializers.DeepSSMResultReadSerializer
+        else:
+            return serializers.DeepSSMResultSerializer
 
 
 class ReconstructedSampleViewSet(

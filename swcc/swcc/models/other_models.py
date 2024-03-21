@@ -148,45 +148,42 @@ class CachedAnalysis(ApiModel):
     good_bad_angles: List[list]
 
 
-class CachedDeepSSMTestingData(ApiModel):
-    _endpoint = 'cached-deepssm-testing-data'
+class DeepSSMTestingData(ApiModel):
+    _endpoint = 'deepssm-testing-data'
 
-    mean_distance: Literal['core.CachedDeepSSMTestingData.mean_distance']
-    mesh: FileType[Literal['core.CachedDeepSSMTestingData.mesh']]
-    particles: FileType[Literal['core.CachedDeepSSMTestingData.particles']]
-
-
-class CachedDeepSSMTesting(ApiModel):
-    _endpoint = 'cached-deepssm-testing'
-
-    data: List[CachedDeepSSMTestingData]
+    project: Project
+    image_type: NonEmptyString
+    image_id: int
+    mesh: FileType[Literal['core.DeepSSMTestingData.mesh']]
+    particles: FileType[Literal['core.DeepSSMTestingData.particles']]
 
 
-class CachedDeepSSMTraining(ApiModel):
-    _endpoint = 'cached-deepssm-training'
+class DeepSSMTrainingImage(ApiModel):
+    _endpoint = 'deepssm-training-image'
 
-    visualization: FileType[Literal['core.CachedDeepSSMTraining.visualization']]
-    data_table: FileType[Literal['core.CachedDeepSSMTraining.data_table']]
-
-
-class CachedDeepSSMAugPair(ApiModel):
-    _endpoint = 'cached-deepssm-aug-pair'
-
-    mesh: Literal['core.CachedDeepSSMAugPair.mesh']
-    particles: Literal['core.CachedDeepSSMAugPair.particles']
+    project: Project
+    image: FileType[Literal['core.DeepSSMTrainingImage.image']]
+    validation: bool
 
 
-class CachedDeepSSMAug(ApiModel):
-    _endpoint = 'cached-deepssm-aug'
+class DeepSSMAugPair(ApiModel):
+    _endpoint = 'deepssm-aug-pair'
 
-    pairs: List[CachedDeepSSMAugPair]
-    visualization: FileType[Literal['core.CachedDeepSSMAug.violin_plot']]
+    project: Project
+    sample_num: int
+    mesh: Literal['core.DeepSSMAugPair.mesh']
+    particles: Literal['core.DeepSSMAugPair.particles']
 
 
-class CachedDeepSSM(ApiModel):
-    _endpoint = 'cached-deep-ssm'
+class DeepSSMResult(ApiModel):
+    _endpoint = 'deepssm-result'
 
-    augmentation: CachedDeepSSMAug
+    project: Project
+    aug_visualization: FileType[Literal['core.DeepSSMResult.aug_visualization']]
+    training_visualization: FileType[Literal['core.DeepSSMResult.training_visualization']]
+    training_visualization_ft: FileType[Literal['core.DeepSSMResult.training_visualization_ft']]
+    training_data_table: FileType[Literal['core.DeepSSMResult.training_data_table']]
+    testing_distances: FileType[Literal['core.DeepSSMResult.testing_distances']]
 
 
 from .project import Project  # noqa: E402

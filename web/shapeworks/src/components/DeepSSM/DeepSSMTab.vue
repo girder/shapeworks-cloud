@@ -1,7 +1,7 @@
 <script lang="ts">
 /* eslint-disable no-unused-vars */
-import { spawnJob } from '@/store';
-import { Ref, ref } from 'vue';
+import { currentTasks, selectedProject, spawnJob, spawnJobProgressPoll } from '@/store';
+import { Ref, computed, ref } from 'vue';
 
 
 export default {
@@ -19,6 +19,13 @@ export default {
             MSE = "MSE",
             Focal = "Focal",
         }
+
+        const taskData = computed(
+            () => {
+                if (!selectedProject.value || !currentTasks.value[selectedProject.value.id]) return undefined
+                return currentTasks.value[selectedProject.value.id]['deepssm_task']
+            }
+        )
 
         const openTab = ref<number>(0);
 
@@ -65,6 +72,8 @@ export default {
         }
 
         async function submitDeepSSMJob() {
+            if (!selectedProject.value) return;
+
             const prepFormData = getFormData(prepData);
             const augFormData = getFormData(augmentationData);
             const trainFormData = getFormData(trainingData);
@@ -75,7 +84,12 @@ export default {
             }
 
             console.log(formData);
-            return await spawnJob("deepssm_run", formData);
+            const taskId = await spawnJob("deepssm", formData);
+            currentTasks.value[selectedProject.value.id] = taskId;
+
+
+            spawnJobProgressPoll();
+            return taskId;
         }
 
         return {
@@ -86,13 +100,20 @@ export default {
             Sampler,
             LossFunction,
             submitDeepSSMJob,
+            taskData,
         }
     },
 }
 </script>
 
 <template>
-    <div class="pa-3">
+    <div v-if="taskData" class="messages-box pa-3">
+        Running deepssm process...
+        <div v-if="taskData.error">{{ taskData.error }}</div>
+        <v-progress-linear v-else :value="taskData.percent_complete"/>
+        <br />
+    </div>
+    <div class="pa-3" v-else>
         DeepSSM Controls
         <v-tooltip bottom>
             <template v-slot:activator="{ on, attrs }">
