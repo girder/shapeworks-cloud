@@ -161,7 +161,7 @@ def run_augmentation(params, project, download_dir):
     # print(os.listdir(aug_data_csv))
     print(os.listdir(aug_dir))
     # TODO: return this? How should this be saved?
-    vis = DataAugmentationUtils.visualizeAugmentation(aug_data_csv, "violin")
+    DataAugmentationUtils.visualizeAugmentation(aug_data_csv, "violin")
     return embedded_dims
 
 
@@ -353,9 +353,10 @@ def deepssm_run(user_id, project_id, progress_id, form_data):
         project = models.Project.objects.get(id=project_id)
 
         # delete any previous results.
-        models.CachedDeepSSMTesting.objects.filter(project=project).delete()
-        models.CachedDeepSSMTraining.objects.filter(project=project).delete()
-        models.CachedDeepSSMAug.objects.filter(project=project).delete()
+        models.DeepSSMResult.objects.filter(project=project).delete()
+        models.DeepSSMAugPair.objects.filter(project=project).delete()
+        models.DeepSSMTrainingImage.objects.filter(project=project).delete()
+        models.DeepSSMTestingData.objects.filter(project=project).delete()
 
     def post_command_function(project, download_dir, result_data, project_filename):
         print(result_data)
@@ -378,9 +379,11 @@ def deepssm_run(user_id, project_id, progress_id, form_data):
 
         # create aug pairs
         for i in range(0, len(result_data["augmentation"]["generated_images"])):
-            aug_pair = models.CachedDeepSSMAugPair.objects.create(
+            aug_pair = models.DeepSSMAugPair.objects.create(
                 project=project,
-                sample_num=result_data["augmentation"]["generated_images"][i].split("_")[2],
+                sample_num=int(  # get sample number from filename
+                    result_data["augmentation"]["generated_images"][i].split("_")[2].split(".")[0],
+                )
             )
             aug_pair.mesh.save(
                 result_data["augmentation"]["generated_images"][i],
@@ -431,7 +434,7 @@ def deepssm_run(user_id, project_id, progress_id, form_data):
                     file1 = predictions.pop()
                     filename = file1.split('.')[0]
 
-                    test_pair = models.CachedDeepSSMTestingData.objects.create(
+                    test_pair = models.DeepSSMTestingData.objects.create(
                         project=project,
                         image_type="world" if predictions == world_predictions else "local",
                         image_id=filename,
