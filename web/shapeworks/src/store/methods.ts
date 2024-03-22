@@ -45,6 +45,10 @@ import {
     getTaskProgress,
     groomProject, optimizeProject, refreshProject,
     deepssmRunProject,
+    getDeepSSMResultForProject,
+    getDeepSSMAugPairsForProject,
+    getDeepSSMTestImagesForProject,
+    getDeepSSMTrainingImagesForProject,
 } from '@/api/rest';
 import { layers, COLORS } from "./constants";
 import { getDistance, hexToRgb } from "@/helper";
@@ -154,10 +158,24 @@ export const loadReconstructedSamplesForProject = async (type: string, id: numbe
     }
 }
 
+// promise.all
 export const loadDeepSSMDataForProject = async (id: number) => {
     // TODO: implement
     if (selectedProject.value) {
-        return;
+        const deepssm_results = {
+            results: await getDeepSSMResultForProject(
+                selectedProject.value.id
+            ),
+            augmentation_pairs: await getDeepSSMAugPairsForProject(
+                selectedProject.value.id
+            ),
+            training_images: await getDeepSSMTrainingImagesForProject(
+                selectedProject.value.id
+            ),
+            test_predictions: await getDeepSSMTestImagesForProject(
+                selectedProject.value.id
+            )
+        }
     }
 }
 
@@ -270,7 +288,7 @@ export async function fetchJobResults(taskName: string) {
             }
             break;
         case 'deepssm':
-            layerName = 'Groomed'
+            layerName = 'Groomed' // TODO: what layer?
             loadFunction = loadDeepSSMDataForProject
             break;
     }

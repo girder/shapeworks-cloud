@@ -59,7 +59,6 @@ def run_prep(params, project, project_file, progress):
     # test_split = project.get_parameters('testing_split')
     train_split = 100.0 - val_split - test_split
     DeepSSMUtils.create_split(project, train_split, val_split, test_split)
-    progress.update_percentage(5)
 
     # /////////////////////////////////////////////////////////////////
     # /// STEP 2: Groom Training Shapes
@@ -244,7 +243,6 @@ def run_testing(params, project, download_dir, progress):
     progress.update_percentage(90)
 
 
-# TODO: implement all steps
 def run_deepssm_command(
     user_id,
     project_id,
@@ -420,11 +418,13 @@ def deepssm_run(user_id, project_id, progress_id, form_data):
 
         world_predictions = result_data["testing"]["world_predictions"]
         local_predictions = result_data["testing"]["local_predictions"]
+
+        print(world_predictions, local_predictions)
         # create test pairs
         for predictions in [world_predictions, local_predictions]:
             for i in range(0, len(predictions)):
-                if len(world_predictions) > 0:
-                    # in world_particles, there's two files with the same name, but .vtk and .particles file types. Add these to mesh and partciles field
+                if len(predictions) > 0:
+                    # in world_predictions, there's two files with the same name, but .vtk and .particles file types. Add these to mesh and partciles field
                     file1 = predictions.pop()
                     filename = file1.split('.')[0]
 
