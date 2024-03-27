@@ -24,9 +24,9 @@ jobs:
       - name: Build images
         run: docker-compose build
       - name: Run migrations
-        run: docker-compose run --rm django ./manage.py migrate
+        run: docker-compose run --rm django conda run --no-capture-output -n shapeworks ./manage.py migrate
       - name: Create super user
-        run: docker-compose run -e DJANGO_SUPERUSER_PASSWORD=$DJANGO_SUPERUSER_PASSWORD --rm django ./manage.py createsuperuser --noinput --email=$DJANGO_SUPERUSER_EMAIL
+        run: docker-compose run -e DJANGO_SUPERUSER_PASSWORD=$DJANGO_SUPERUSER_PASSWORD --rm django conda run --no-capture-output -n shapeworks ./manage.py createsuperuser --noinput --email=$DJANGO_SUPERUSER_EMAIL
       - name: Start server
         run: docker-compose up -d
 
