@@ -15,7 +15,7 @@ import { ColorMode, ScalarMode } from 'vtk.js/Sources/Rendering/Core/Mapper/Cons
 import { FieldDataTypes } from 'vtk.js/Sources/Common/DataModel/DataSet/Constants';
 
 import {
-    renderLoading, layers, layersShown, orientationIndicator,
+    renderLoading, layers, layersShown, orientationIndicator, imageViewIntersectMode,
     cachedMarchingCubes, cachedParticleComparisonColors, vtkShapesByType,
     analysisFilesShown, currentAnalysisParticlesFiles, meanAnalysisParticlesFiles,
     showDifferenceFromMeanMode, cachedParticleComparisonVectors,
@@ -24,6 +24,7 @@ import {
 } from '@/store';
 import { SPHERE_RESOLUTION } from '@/store/constants';
 import widgetSync from './widgetSync';
+import imageSync from './imageSync';
 
 export const GOOD_BAD_COLORS = [
     [0, 255, 0],
@@ -46,6 +47,7 @@ const COLORS = [
 
 export default {
     ...widgetSync,
+    ...imageSync,
     async resize() {
         await this.$nextTick();
         if (this.vtk.renderWindow) {
@@ -122,8 +124,8 @@ export default {
                     (old, index) => old + viewUpDelta[index]
                 )
             )
-            camera.setClippingRange(0.1, 1000)
         }
+        renderer.resetCameraClippingRange()
     },
     syncCameras(animation) {
         const targetRenderer = animation.pokedRenderer;
@@ -226,28 +228,32 @@ export default {
                             colorMode: ColorMode.MAP_SCALARS,
                             scalarMode: ScalarMode.USE_POINT_FIELD_DATA,
                         });
-                        const actor = vtkActor.newInstance();
-                        actor.getProperty().setColor(...type.rgb);
-                        actor.getProperty().setOpacity(opacity);
-                        actor.setMapper(mapper);
-                        if (shapeData.getClassName() == 'vtkPolyData') {
-                            mapper.setInputData(shapeData);
-                        } else if (cachedMarchingCubes.value[cacheLabel]) {
-                            mapper.setInputData(cachedMarchingCubes.value[cacheLabel])
+                        if (shapeData.getClassName() == 'vtkImageData') {
+                            this.addImage(shapeData, renderer)
                         } else {
-                            const marchingCube = vtkImageMarchingCubes.newInstance({
-                                contourValue: 0.001,
-                                computeNormals: true,
-                                mergePoints: true,
-                            });
-                            marchingCube.setInputData(shapeData)
-                            mapper.setInputConnection(marchingCube.getOutputPort());
-                            cachedMarchingCubes.value[cacheLabel] = marchingCube.getOutputData()
+                            if (shapeData.getClassName() == 'vtkPolyData') {
+                                mapper.setInputData(shapeData);
+                            } else if (cachedMarchingCubes.value[cacheLabel]) {
+                                mapper.setInputData(cachedMarchingCubes.value[cacheLabel])
+                            } else {
+                                const marchingCube = vtkImageMarchingCubes.newInstance({
+                                    contourValue: 0.001,
+                                    computeNormals: true,
+                                    mergePoints: true,
+                                });
+                                marchingCube.setInputData(shapeData)
+                                mapper.setInputConnection(marchingCube.getOutputPort());
+                                cachedMarchingCubes.value[cacheLabel] = marchingCube.getOutputData()
+                            }
+                            if (showDifferenceFromMeanMode.value) {
+                                this.showDifferenceFromMean(mapper, renderer, label, domainIndex)
+                            }
+                            const actor = vtkActor.newInstance();
+                            actor.getProperty().setColor(...type.rgb);
+                            actor.getProperty().setOpacity(opacity);
+                            actor.setMapper(mapper);
+                            renderer.addActor(actor);
                         }
-                        if (showDifferenceFromMeanMode.value) {
-                            this.showDifferenceFromMean(mapper, renderer, label, domainIndex)
-                        }
-                        renderer.addActor(actor);
                     }
                 )
             }
@@ -407,6 +413,7 @@ export default {
             wm.disablePicking()
         })
 
+        this.resetImageSlices()
         this.prepareLabelCanvas();
         let positionDelta, viewUpDelta
 
@@ -447,6 +454,10 @@ export default {
                 this.applyCameraDelta(renderer, positionDelta, viewUpDelta)
             })
         }
+
+        // layers shown may have changed intersections
+        // this should be done after all layers are added
+        if (imageViewIntersectMode.value) this.resetIntersections()
 
         const targetRenderer = Object.values(this.vtk.renderers)[this.columns - 1]
         this.vtk.orientationCube = this.newOrientationCube(this.vtk.interactor)

@@ -88,13 +88,19 @@ export default {
         }
     },
     initializeConstraintColormap(actor) {
+        const mapper = actor.getMapper()
+        if (!mapper.setLookupTable) return undefined
+
         const ctfun = vtkColorTransferFunction.newInstance();
-        ctfun.addRGBPoint(1, ...actor.getProperty().getColor()); // 0: default color has not been excluded
+        let defaultColor = [255, 255, 255]
+        if (actor.getProperty() && actor.getProperty().getColor) {
+            defaultColor = actor.getProperty().getColor()
+        }
+        ctfun.addRGBPoint(1, ...defaultColor); // 0: default color has not been excluded
         ctfun.addRGBPoint(0, 0.5, 0.5, 0.5); // 1: gray has been excluded
         ctfun.setMappingRange(0, 1)
         ctfun.updateRange()
 
-        const mapper = actor.getMapper()
         mapper.setLookupTable(ctfun)
         mapper.setColorByArrayName('color')
 

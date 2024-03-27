@@ -102,3 +102,25 @@ export const jobProgressPoll = ref();
 export const analysisExpandedTab = ref(0);
 
 export const analysisAnimate = ref<boolean>(false);
+
+export const imageViewMode = ref<boolean>(false);
+
+export const imageViewIntersectMode = ref<boolean>(false);
+
+export const imageViewIntersectCropMode = ref<boolean>(false);
+
+export const imageViewAxis = ref<string>('Z');
+
+export const imageViewSlices = ref({x: 0, y: 0, z: 0});
+
+export const imageViewSliceRanges = ref({x: [0, 1], y: [0, 1], z: [0, 1]});
+
+export const imageViewCroppedSliceRanges = ref({x: [0, 1], y: [0, 1], z: [0, 1]});
+
+export const imageViewWindow = ref<number>(0);
+
+export const imageViewWindowRange = ref<number[]>([0, 1]);
+
+export const imageViewLevel = ref<number>(0);
+
+export const imageViewLevelRange = ref<number[]>([0, 1]);

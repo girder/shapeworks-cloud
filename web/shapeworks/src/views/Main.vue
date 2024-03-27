@@ -41,6 +41,7 @@ import {
     allSetConstraints,
     landmarksLoading,
     constraintsLoading,
+    imageViewMode,
 } from '@/store';
 import router from '@/router';
 import TabForm from '@/components/TabForm.vue';
@@ -77,8 +78,8 @@ export default {
                 width,
                 position: 'absolute',
                 left: `${drawerWidth.value}px`,
-                top: '70px',
-                height: 'calc(100% - 70px)'
+                top: imageViewMode.value ? '140px' : '70px',
+                height: imageViewMode.value ? 'calc(100% - 140px)' : 'calc(100% - 70px)'
             }
         })
 
@@ -186,6 +187,7 @@ export default {
                 ])
             }
             renderLoading.value = true
+            imageViewMode.value = false
             let newRenderData = {}
             let newRenderMetaData = {}
             const groupedSelections: Record<string, DataObject[]> = groupBy(selectedDataObjects.value, 'subject')
@@ -451,7 +453,7 @@ export default {
             <render-controls @change="refreshRender" :currentTab="tab || ''"/>
         </v-card>
 
-        <v-card :style="renderAreaStyle" class="render-area pa-3">
+        <v-card :style="renderAreaStyle" class="pa-3">
             <template v-if="selectedDataObjects.length > 0 || analysisFilesShown && analysisFilesShown.length">
                 <shape-viewer
                     :data="renderData"
@@ -478,7 +480,7 @@ export default {
     background-color: #1e1e1e;
 }
 .render-controls {
-    height: 70px!important;
+    height: auto!important;
     top: 0!important;
     z-index: 2;
 }

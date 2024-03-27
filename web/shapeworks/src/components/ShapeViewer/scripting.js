@@ -75,6 +75,7 @@ export default {
             this.renderGrid();
         },
         glyphSize() {
+            this.updateGlyphSize(this.glyphSize)
             this.vtk.pointMappers.forEach((mapper) => {
                 mapper.setScaleFactor(this.glyphSize);
             });
@@ -130,6 +131,7 @@ export default {
         this.updateSize();
         this.renderGrid();
         this.watchWidgetStates();
+        this.watchImageStates();
     },
     updated() {
         this.prepareColorScale()

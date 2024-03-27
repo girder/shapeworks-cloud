@@ -77,11 +77,15 @@ export default {
             loadingState.value = false;
         }
 
-        function updateSelectedObjects(){
+        function updateSelectedObjects() {
             selectedDataObjects.value = allDataObjectsInDataset.value.filter(
                 (dataObject) => {
-                    return selectedAnatomies.value.includes(dataObject.anatomy_type) &&
-                    selectedSubjects.value.includes(dataObject.subject)
+                    return (
+                        (
+                            !selectedAnatomies.value.length ||
+                            selectedAnatomies.value.includes(dataObject.anatomy_type)
+                        ) && selectedSubjects.value.includes(dataObject.subject)
+                    )
                 }
             )
         }
