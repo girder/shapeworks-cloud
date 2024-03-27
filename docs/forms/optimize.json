@@ -1,0 +1,162 @@
+{
+    "id": "optimize",
+    "type": "object",
+    "description": "Generate an optimized set of particles to represent the geometry of the average shape among the data",
+    "properties": {
+        "section_1": {
+            "title": "Particle System Parameters",
+            "type": "object",
+            "properties": {
+                "number_of_particles": {
+                    "type": "integer",
+                    "default": 128,
+                    "title": "Number of particles",
+                    "description": "Number of correspondence points to generate"
+                },
+                "relative_weighting": {
+                    "type": "number",
+                    "default": 0.05,
+                    "title": "Relative weighting",
+                    "x-cols": 6,
+                    "description": "Relative weighting of correspondence term during optimization"
+                },
+                "initial_relative_weighting": {
+                    "type": "number",
+                    "default": 0.05,
+                    "title": "Initial",
+                    "x-cols": 6,
+                    "x-class": "float-right pl-5",
+                    "description": "Relative weighting of correspondence term during initialization"
+                },
+                "starting_regularization": {
+                    "type": "integer",
+                    "default": 1000,
+                    "title": "Starting regularization",
+                    "x-cols": 6,
+                    "description": "Starting regularization of correspondence covariance matrix"
+                },
+                "ending_regularization": {
+                    "type": "integer",
+                    "default": 10,
+                    "title": "Ending regularization",
+                    "x-cols": 6,
+                    "x-class": "float-right pl-5",
+                    "description": "Ending regularization of correspondence covariance matrix"
+                },
+                "iterations_per_split": {
+                    "type": "integer",
+                    "default": 1000,
+                    "title": "Iterations per split",
+                    "description": "Number of iterations for each particle split"
+                },
+                "optimization_iterations": {
+                    "type": "integer",
+                    "default": 1000,
+                    "title": "Optimization iterations",
+                    "description": "Number of optimizations to run"
+                },
+                "use_landmarks": {
+                    "type": "boolean",
+                    "default": false,
+                    "title": "Landmarks",
+                    "description": "Use landmarks as initial particles"
+                },
+                "use_geodesic_distance": {
+                    "type": "boolean",
+                    "default": false,
+                    "title": "Geodesic distance",
+                    "x-cols": 6,
+                    "description": "Use geodesic distances for sampling term: may be more effective for capturing thin features. Requires ~10x more time and a larger memory footprint. Only supported for mesh inputs."
+                },
+                "geodesic_cache_multiplier": {
+                    "type": "integer",
+                    "default": 20,
+                    "title": "Cache multiplier",
+                    "x-cols": 6,
+                    "x-class": "float-right pl-5",
+                    "x-display": "custom-conditional",
+                    "x-display-if": "(model) => model.section_1.use_geodesic_distance"
+                },
+                "use_normals": {
+                    "type": "boolean",
+                    "default": false,
+                    "title": "Normals",
+                    "x-cols": 6,
+                    "description": "Use surface normals as a part of optimization"
+                },
+                "normals_strength": {
+                    "type": "integer",
+                    "default": 10,
+                    "title": "Strength",
+                    "x-cols": 6,
+                    "x-class": "float-right pl-5",
+                    "x-display": "custom-conditional",
+                    "x-display-if": "(model) => model.section_1.use_normals",
+                    "description": "Strength of surface normals relative to position"
+                },
+                "multiscale": {
+                    "type": "boolean",
+                    "default": false,
+                    "title": "Multiscale",
+                    "x-cols": 6,
+                    "description": "Use multiscale optimization mode"
+                },
+                "multiscale_particles": {
+                    "type": "integer",
+                    "default": 32,
+                    "title": "Particles",
+                    "x-cols": 6,
+                    "x-class": "float-right pl-5",
+                    "x-display": "custom-conditional",
+                    "x-display-if": "(model) => model.section_1.multiscale",
+                    "description": "Start multiscale optimization after this many particles"
+                },
+                "procrustes": {
+                    "type": "boolean",
+                    "default": false,
+                    "title": "Procrustes",
+                    "description": "Use procrustes registration during optimization"
+                },
+                "procrustes_scaling": {
+                    "type": "boolean",
+                    "default": false,
+                    "title": "Scaling",
+                    "x-class": "float-right pl-5",
+                    "x-display": "custom-conditional",
+                    "x-display-if": "(model) => model.section_1.procrustes",
+                    "description": "Use procrustes scaling"
+                },
+                "procrustes_interval": {
+                    "type": "integer",
+                    "default": 10,
+                    "title": "Interval",
+                    "x-class": "float-right pl-5",
+                    "x-display": "custom-conditional",
+                    "x-display-if": "(model) => model.section_1.procrustes",
+                    "description": "How often to run procrustes during optimization"
+                },
+                "procrustes_rotation_translation": {
+                    "type": "boolean",
+                    "default": true,
+                    "title": "Rotation/Translation",
+                    "x-class": "float-right pl-5",
+                    "x-display": "custom-conditional",
+                    "x-display-if": "(model) => model.section_1.procrustes"
+                },
+                "narrow_band": {
+                    "type": "integer",
+                    "default": 4,
+                    "title": "Narrow band",
+                    "description": "Narrow band around distance transforms. This value should only be changed if an error occurs during optimization suggesting that it should be increased. It has no effect on the optimization."
+                },
+                "optimize_output_prefix": {
+                    "type": "string",
+                    "default": "particles",
+                    "title": "Output prefix",
+                    "x-display": "custom-conditional",
+                    "x-display-if": "(model) => false"
+                }
+            }
+        }
+    }
+}
