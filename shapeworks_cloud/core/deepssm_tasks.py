@@ -1,26 +1,19 @@
-import json
 import os
 from pathlib import Path
-import re
-from subprocess import PIPE, Popen
 from tempfile import TemporaryDirectory
-from typing import Dict, List
+from typing import Dict
 
 import DataAugmentationUtils
 import DeepSSMUtils
 from celery import shared_task
 from django.conf import settings
 from django.contrib.auth.models import User
-from django.core.files.base import ContentFile
-from django.db.models import Q
 from rest_framework.authtoken.models import Token
 import shapeworks as sw
 
 from shapeworks_cloud.core import models
 from swcc.api import swcc_session
 from swcc.models import Project as SWCCProject
-from swcc.models.constants import expected_key_prefixes
-from swcc.models.project import ProjectFileIO
 
 from .tasks import edit_swproj_section
 
@@ -63,10 +56,10 @@ def run_prep(params, project, project_file, progress):
     # /////////////////////////////////////////////////////////////////
     # /// STEP 2: Groom Training Shapes
     # /////////////////////////////////////////////////////////////////
-    params = project.get_parameters("groom")
-    params.set("alignment_method", "Iterative Closest Point")
-    params.set("alignment_enabled", "true")
-    project.set_parameters("groom", params)
+    params = project.get_parameters('groom')
+    params.set('alignment_method', 'Iterative Closest Point')
+    params.set('alignment_enabled', 'true')
+    project.set_parameters('groom', params)
 
     DeepSSMUtils.groom_training_shapes(project)
     project.save(project_file)
@@ -76,10 +69,10 @@ def run_prep(params, project, project_file, progress):
     # /////////////////////////////////////////////////////////////////
 
     # set num_particles to 16 and iterations_per_split to 1
-    params = project.get_parameters("optimize")
-    params.set("number_of_particles", "16")
-    params.set("iterations_per_split", "1")
-    project.set_parameters("optimize", params)
+    params = project.get_parameters('optimize')
+    params.set('number_of_particles', '16')
+    params.set('iterations_per_split', '1')
+    project.set_parameters('optimize', params)
 
     DeepSSMUtils.optimize_training_particles(project)
     project.save(project_file)
@@ -88,15 +81,15 @@ def run_prep(params, project, project_file, progress):
     # /////////////////////////////////////////////////////////////////
     # /// STEP 4: Groom Training Images
     # /////////////////////////////////////////////////////////////////
-    print("Grooming training images")
+    print('Grooming training images')
     DeepSSMUtils.groom_training_images(project)
     project.save(project_file)
 
     # /////////////////////////////////////////////////////////////////
     # /// STEP 5: Groom Validation Images
     # /////////////////////////////////////////////////////////////////
-    val_indices = DeepSSMUtils.get_split_indices(project, "val")
-    test_indices = DeepSSMUtils.get_split_indices(project, "test")
+    val_indices = DeepSSMUtils.get_split_indices(project, 'val')
+    test_indices = DeepSSMUtils.get_split_indices(project, 'test')
     val_test_indices = val_indices + test_indices
     DeepSSMUtils.groom_val_test_images(project, val_test_indices)
     project.save(project_file)
@@ -107,14 +100,14 @@ def run_prep(params, project, project_file, progress):
     # /////////////////////////////////////////////////////////////////
     DeepSSMUtils.prep_project_for_val_particles(project)
 
-    params = project.get_parameters("optimize")
-    params.set("multiscale", "0")
-    params.set("procrustes", "0")
-    params.set("procrustes_interval", "0")
-    params.set("procrustes_scaling", "0")
-    params.set("narrow_band", "1e10")
+    params = project.get_parameters('optimize')
+    params.set('multiscale', '0')
+    params.set('procrustes', '0')
+    params.set('procrustes_interval', '0')
+    params.set('procrustes_scaling', '0')
+    params.set('narrow_band', '1e10')
 
-    project.set_parameters("optimize", params)
+    project.set_parameters('optimize', params)
 
     DeepSSMUtils.groom_validation_shapes(project)
     project.save(project_file)
@@ -150,10 +143,10 @@ def run_augmentation(params, project, download_dir, progress):
     )
     progress.update_percentage(25)
 
-    aug_dir = download_dir + "/deepssm/augmentation/"
-    aug_data_csv = aug_dir + "TotalData.csv"
+    aug_dir = download_dir + '/deepssm/augmentation/'
+    aug_data_csv = aug_dir + 'TotalData.csv'
 
-    DataAugmentationUtils.visualizeAugmentation(aug_data_csv, "violin")
+    DataAugmentationUtils.visualizeAugmentation(aug_data_csv, 'violin')
     progress.update_percentage(30)
 
     return embedded_dims
@@ -165,17 +158,17 @@ def run_training(params, project, download_dir, aug_dims, progress):
     # /////////////////////////////////////////////////////////////////
     # /// STEP 8: Create PyTorch loaders from data
     # /////////////////////////////////////////////////////////////////
-    DeepSSMUtils.prepare_data_loaders(project, batch_size, "train")
-    DeepSSMUtils.prepare_data_loaders(project, batch_size, "val")
+    DeepSSMUtils.prepare_data_loaders(project, batch_size, 'train')
+    DeepSSMUtils.prepare_data_loaders(project, batch_size, 'val')
     progress.update_percentage(35)
 
     # /////////////////////////////////////////////////////////////////
     # /// STEP 9: Train DeepSSM Model
     # /////////////////////////////////////////////////////////////////
-    out_dir = download_dir + "/deepssm/"
-    aug_dir = out_dir + "augmentation/"
+    out_dir = download_dir + '/deepssm/'
+    aug_dir = out_dir + 'augmentation/'
 
-    loader_dir = out_dir + "torch_loaders/"
+    loader_dir = out_dir + 'torch_loaders/'
 
     epochs = int(params['train_epochs'])
     learning_rate = float(params['train_learning_rate'])
@@ -185,11 +178,11 @@ def run_training(params, project, download_dir, aug_dims, progress):
     fine_tune_learning_rate = float(params['train_fine_tuning_learning_rate'])
     loss_function = params['train_loss_function']
 
-    config_file = out_dir + "configuration.json"
+    config_file = out_dir + 'configuration.json'
 
     DeepSSMUtils.prepare_config_file(
         config_file,
-        "model",
+        'model',
         aug_dims,
         out_dir,
         loader_dir,
@@ -209,7 +202,7 @@ def run_training(params, project, download_dir, aug_dims, progress):
 
 
 def run_testing(params, project, download_dir, progress):
-    test_indices = DeepSSMUtils.get_split_indices(project, "test")
+    test_indices = DeepSSMUtils.get_split_indices(project, 'test')
 
     # /////////////////////////////////////////////////////////////////
     # /// STEP 10: Groom Testing Images
@@ -221,17 +214,17 @@ def run_testing(params, project, download_dir, progress):
     # /// STEP 11: Prepare Test Data PyTorch Loaders
     # /////////////////////////////////////////////////////////////////
     batch_size = int(params['train_batch_size'])
-    DeepSSMUtils.prepare_data_loaders(project, batch_size, "test")
+    DeepSSMUtils.prepare_data_loaders(project, batch_size, 'test')
 
-    test_names_file = download_dir + "/deepssm/torch_loaders/test_names.txt"
+    test_names_file = download_dir + '/deepssm/torch_loaders/test_names.txt'
 
     with open(test_names_file, 'w') as file:
         list_items = ["'" + str(id) + "'" for id in test_indices]
-        file.write("[")
-        file.write(", ".join(list_items))
-        file.write("]")
+        file.write('[')
+        file.write(', '.join(list_items))
+        file.write(']')
 
-    config_file = download_dir + "/deepssm/configuration.json"
+    config_file = download_dir + '/deepssm/configuration.json'
     progress.update_percentage(60)
 
     # /////////////////////////////////////////////////////////////////
@@ -262,12 +255,12 @@ def run_deepssm_command(
             # fetch everything we need
             session.set_token(token.key)
             project = models.Project.objects.get(id=project_id)
-            print("setting project filename")
+            print('setting project filename')
             project_filename = project.file.name.split('/')[-1]
-            print("project filename set", project_filename)
+            print('project filename set', project_filename)
             swcc_project = SWCCProject.from_id(project.id)
             swcc_project.download(download_dir)
-            print("Downloaded swcc project")
+            print('Downloaded swcc project')
 
             pre_command_function()
             progress.update_percentage(10)
@@ -293,7 +286,7 @@ def run_deepssm_command(
             sw_project_file = str(Path(download_dir, project_filename))
 
             # Save project spreadsheet
-            # spreadsheet_file = data_dir + "deepssm_project.swproj"
+            # spreadsheet_file = data_dir + 'deepssm_project.swproj'
             sw_project.load(sw_project_file)
 
             os.chdir(sw_project.get_project_path())
@@ -302,37 +295,37 @@ def run_deepssm_command(
             aug_dims = run_augmentation(form_data, sw_project, download_dir, progress)
 
             # result data has paths to files
-            result_data["augmentation"] = {
-                "total_data_csv": download_dir + "/deepssm/augmentation/TotalData.csv",
-                "violin_plot": download_dir + "/deepssm/augmentation/violin.png",
-                "generated_images": os.listdir(
-                    download_dir + "/deepssm/augmentation/Generated-Images/"
+            result_data['augmentation'] = {
+                'total_data_csv': download_dir + '/deepssm/augmentation/TotalData.csv',
+                'violin_plot': download_dir + '/deepssm/augmentation/violin.png',
+                'generated_images': os.listdir(
+                    download_dir + '/deepssm/augmentation/Generated-Images/'
                 ),
-                "generated_particles": os.listdir(
-                    download_dir + "/deepssm/augmentation/Generated-Particles/"
+                'generated_particles': os.listdir(
+                    download_dir + '/deepssm/augmentation/Generated-Particles/'
                 ),
             }
 
             run_training(form_data, sw_project, download_dir, aug_dims, progress)
 
-            result_data["training"] = {
-                "train_log": download_dir + "/deepssm/model/train_log.csv",
-                "training_plot": download_dir + "/deepssm/model/training_plot.png",
-                "training_plot_ft": download_dir + "/deepssm/model/training_plot_ft.png",
-                "train_images": os.listdir(download_dir + "/deepssm/train_images/"),
-                "val_and_test_images": os.listdir(download_dir + "/deepssm/val_and_test_images/"),
+            result_data['training'] = {
+                'train_log': download_dir + '/deepssm/model/train_log.csv',
+                'training_plot': download_dir + '/deepssm/model/training_plot.png',
+                'training_plot_ft': download_dir + '/deepssm/model/training_plot_ft.png',
+                'train_images': os.listdir(download_dir + '/deepssm/train_images/'),
+                'val_and_test_images': os.listdir(download_dir + '/deepssm/val_and_test_images/'),
             }
 
             run_testing(form_data, sw_project, download_dir, progress)
 
-            result_data["testing"] = {
-                "world_predictions": os.listdir(
-                    download_dir + "/deepssm/model/test_predictions/world_predictions/"
+            result_data['testing'] = {
+                'world_predictions': os.listdir(
+                    download_dir + '/deepssm/model/test_predictions/world_predictions/'
                 ),
-                "local_predictions": os.listdir(
-                    download_dir + "/deepssm/model/test_predictions/local_predictions/"
+                'local_predictions': os.listdir(
+                    download_dir + '/deepssm/model/test_predictions/local_predictions/'
                 ),
-                "test_distances": download_dir + "/deepssm/test_distances.csv",
+                'test_distances': download_dir + '/deepssm/test_distances.csv',
             }
 
             os.chdir('../../')
@@ -366,32 +359,32 @@ def deepssm_run(user_id, project_id, progress_id, form_data):
         # augmentation
         deepssm_result.aug_visualization.save(
             'violin_plot.png',
-            open(result_data["augmentation"]["violin_plot"], 'rb'),
+            open(result_data['augmentation']['violin_plot'], 'rb'),
         )
 
         # create aug pairs
-        for i in range(0, len(result_data["augmentation"]["generated_images"])):
+        for i in range(0, len(result_data['augmentation']['generated_images'])):
             aug_pair = models.DeepSSMAugPair.objects.create(
                 project=project,
                 sample_num=int(  # get sample number from filename
-                    result_data["augmentation"]["generated_images"][i].split("_")[2].split(".")[0],
-                )
+                    result_data['augmentation']['generated_images'][i].split('_')[2].split('.')[0],
+                ),
             )
             aug_pair.mesh.save(
-                result_data["augmentation"]["generated_images"][i],
+                result_data['augmentation']['generated_images'][i],
                 open(
                     download_dir
-                    + "/deepssm/augmentation/Generated-Images/"
-                    + result_data["augmentation"]["generated_images"][i],
+                    + '/deepssm/augmentation/Generated-Images/'
+                    + result_data['augmentation']['generated_images'][i],
                     'rb',
                 ),
             )
             aug_pair.particles.save(
-                result_data["augmentation"]["generated_particles"][i],
+                result_data['augmentation']['generated_particles'][i],
                 open(
                     download_dir
-                    + "/deepssm/augmentation/Generated-Particles/"
-                    + result_data["augmentation"]["generated_particles"][i],
+                    + '/deepssm/augmentation/Generated-Particles/'
+                    + result_data['augmentation']['generated_particles'][i],
                     'rb',
                 ),
             )
@@ -399,48 +392,49 @@ def deepssm_run(user_id, project_id, progress_id, form_data):
         # training
         deepssm_result.training_visualization.save(
             'training_plot.png',
-            open(result_data["training"]["training_plot"], 'rb'),
+            open(result_data['training']['training_plot'], 'rb'),
         )
         deepssm_result.training_visualization_ft.save(
             'training_plot_ft.png',
-            open(result_data["training"]["training_plot_ft"], 'rb'),
+            open(result_data['training']['training_plot_ft'], 'rb'),
         )
         deepssm_result.training_data_table.save(
             'train_log.csv',
-            open(result_data["training"]["train_log"], 'rb'),
+            open(result_data['training']['train_log'], 'rb'),
         )
 
         # testing
         deepssm_result.testing_distances.save(
             'test_distances.csv',
-            open(result_data["testing"]["test_distances"], 'rb'),
+            open(result_data['testing']['test_distances'], 'rb'),
         )
 
-        world_predictions = result_data["testing"]["world_predictions"]
-        local_predictions = result_data["testing"]["local_predictions"]
+        world_predictions = result_data['testing']['world_predictions']
+        local_predictions = result_data['testing']['local_predictions']
 
         print(world_predictions, local_predictions)
         # create test pairs
         for predictions in [world_predictions, local_predictions]:
-            for i in range(0, len(predictions)):
+            for _i in range(0, len(predictions)):
                 if len(predictions) > 0:
-                    # in world_predictions, there's two files with the same name, but .vtk and .particles file types. Add these to mesh and partciles field
+                    # in world_predictions, there's two files with the same name,
+                    # but .vtk and .particles file types. Add these to mesh and partciles field
                     file1 = predictions.pop()
                     filename = file1.split('.')[0]
 
                     test_pair = models.DeepSSMTestingData.objects.create(
                         project=project,
-                        image_type="world" if predictions == world_predictions else "local",
+                        image_type='world' if predictions == world_predictions else 'local',
                         image_id=filename,
                     )
 
                     predictions_path = (
                         download_dir
-                        + "/deepssm/model/test_predictions/"
+                        + '/deepssm/model/test_predictions/'
                         + (
-                            "world_predictions/"
+                            'world_predictions/'
                             if predictions == world_predictions
-                            else "local_predictions/"
+                            else 'local_predictions/'
                         )
                     )
 
@@ -477,20 +471,20 @@ def deepssm_run(user_id, project_id, progress_id, form_data):
                             ),
                         )
 
-        train_images = result_data["training"]["train_images"]
-        val_and_test_images = result_data["training"]["val_and_test_images"]
+        train_images = result_data['training']['train_images']
+        val_and_test_images = result_data['training']['val_and_test_images']
         # create training images
         for images in [train_images, val_and_test_images]:
             for image in images:
-                image_type = "train" if images == train_images else "val_and_test"
+                image_type = 'train' if images == train_images else 'val_and_test'
                 train_image = models.DeepSSMTrainingImage.objects.create(
                     project=project,
-                    validation=True if image_type == "val_and_test" else False,
+                    validation=True if image_type == 'val_and_test' else False,
                 )
                 train_image.image.save(
                     image,
                     open(
-                        download_dir + "/deepssm/" + image_type + "_images/" + image,
+                        download_dir + '/deepssm/' + image_type + '_images/' + image,
                         'rb',
                     ),
                 )
