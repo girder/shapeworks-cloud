@@ -56,9 +56,6 @@ export default {
 
         /**
          * Converts an object of reactive properties to a plain object for use in api formData fields.
-         * 
-         * @param {Object} object - The object containing reactive properties.
-         * @returns {Object} - The plain object with the same key-value pairs as the input object.
          */
         function getFormData(object: {[key: string]: Ref<any>}) {
             return (

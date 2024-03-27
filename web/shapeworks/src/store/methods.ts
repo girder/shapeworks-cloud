@@ -158,23 +158,30 @@ export const loadReconstructedSamplesForProject = async (type: string, id: numbe
     }
 }
 
-// promise.all
 export const loadDeepSSMDataForProject = async (id: number) => {
-    // TODO: implement
     if (selectedProject.value) {
-        const deepssm_results = {
-            results: await getDeepSSMResultForProject(
+        const results = await Promise.all([
+            await getDeepSSMResultForProject(
                 selectedProject.value.id
             ),
-            augmentation_pairs: await getDeepSSMAugPairsForProject(
+            await getDeepSSMAugPairsForProject(
                 selectedProject.value.id
             ),
-            training_images: await getDeepSSMTrainingImagesForProject(
+            await getDeepSSMTrainingImagesForProject(
                 selectedProject.value.id
             ),
-            test_predictions: await getDeepSSMTestImagesForProject(
+            await getDeepSSMTestImagesForProject(
                 selectedProject.value.id
-            )
+            )]
+        )
+
+        console.log(results[0], results[1], results[2], results[3])
+
+        return {
+            result: results[0],
+            aug_pairs: results[1],
+            training_images: results[2],
+            test_images: results[3]
         }
     }
 }
@@ -288,7 +295,7 @@ export async function fetchJobResults(taskName: string) {
             }
             break;
         case 'deepssm':
-            layerName = 'Groomed' // TODO: what layer?
+            layerName = 'Groomed' // TODO: Implement shapeviewer changes for deepssm tabs
             loadFunction = loadDeepSSMDataForProject
             break;
     }
