@@ -1,0 +1,173 @@
+{
+    "id": "groom",
+    "type": "object",
+    "description": "Pre-process and prepare input data for the optimization process",
+    "properties": {
+        "section_1": {
+            "title": "Mesh Grooming",
+            "type": "object",
+            "properties": {
+                "fill_mesh_holes": {
+                    "type": "boolean",
+                    "default": true,
+                    "title": "Fill Holes",
+                    "x-display": "custom-conditional",
+                    "description": "Fill small holes in the mesh"
+                },
+                "mesh_smooth": {
+                    "type": "boolean",
+                    "default": true,
+                    "title": "Smooth",
+                    "x-display": "custom-conditional",
+                    "description": "Enable mesh smoothing"
+                },
+                "mesh_smoothing_method": {
+                    "type": "string",
+                    "enum": [
+                        "Laplacian",
+                        "WindowedSinc"
+                    ],
+                    "default": "Laplacian",
+                    "title": "Smoothing Method",
+                    "x-display": "custom-conditional",
+                    "x-display-if": "(model) => model.section_1.mesh_smooth",
+                    "description": "Mesh smoothing type: Laplacian or Windowed Sinc"
+                },
+                "mesh_smoothing_vtk_laplacian_iterations": {
+                    "type": "integer",
+                    "default": 10,
+                    "title": "Iterations",
+                    "x-display": "custom-conditional",
+                    "x-display-if": "(model) => model.section_1.mesh_smoothing_method === 'Laplacian'",
+                    "x-cols": 6,
+                    "description": "Number of iterations of laplacian smoothing.  More iterations provides more smoothing."
+                },
+                "mesh_smoothing_vtk_laplacian_relaxation": {
+                    "type": "integer",
+                    "default": 1,
+                    "title": "Relaxation",
+                    "x-display": "custom-conditional",
+                    "x-display-if": "(model) => model.section_1.mesh_smoothing_method === 'Laplacian'",
+                    "x-cols": 6,
+                    "description": "Relaxation controls the amount of smoothing in each iteration."
+                },
+                "mesh_smoothing_vtk_windowed_sinc_iterations": {
+                    "type": "integer",
+                    "default": 10,
+                    "title": "Iterations",
+                    "x-display": "custom-conditional",
+                    "x-display-if": "(model) => model.section_1.mesh_smoothing_method === 'WindowedSinc'",
+                    "x-cols": 6,
+                    "description": "Number of iterations of windowed sinc smoothing.  More iterations provides more smoothing."
+                },
+                "mesh_smoothing_vtk_windowed_sinc_passband": {
+                    "type": "number",
+                    "default": 0.05,
+                    "title": "Pass Band",
+                    "x-display": "custom-conditional",
+                    "x-display-if": "(model) => model.section_1.mesh_smoothing_method === 'WindowedSinc'",
+                    "x-cols": 6,
+                    "description": "Passband parameter alters how much smoothing each iteration performs."
+                },
+                "remesh": {
+                    "type": "boolean",
+                    "default": true,
+                    "title": "Remesh",
+                    "x-display": "custom-conditional",
+                    "x-cols": 6,
+                    "description": "Enable remeshing to create a more uniform adaptive mesh. Also fixes many mesh problems"
+                },
+                "remesh_percent_mode": {
+                    "type": "boolean",
+                    "default": true,
+                    "title": "Use percentage",
+                    "x-display": "custom-conditional",
+                    "x-display-if": "(model) => model.section_1.remesh",
+                    "x-cols": 6,
+                    "description": "Check this box to set the number of vertices based on a percentage of the mesh's current number of vertices"
+                },
+                "remesh_percent": {
+                    "type": "number",
+                    "default": 75.0,
+                    "title": "Percentage of vertices",
+                    "x-display": "custom-conditional",
+                    "x-display-if": "(model) => model.section_1.remesh && model.section_1.remesh_percent_mode",
+                    "description": "Set the target number of vertices as a percentage of the current number of vertices"
+                },
+                "remesh_num_vertices": {
+                    "type": "integer",
+                    "default": 3000,
+                    "title": "Number of vertices",
+                    "x-display": "custom-conditional",
+                    "x-display-if": "(model) => model.section_1.remesh && !model.section_1.remesh_percent_mode",
+                    "description": "Set the desired number of vertices directly"
+                },
+                "remesh_gradation": {
+                    "type": "number",
+                    "default": 1,
+                    "title": "Adaptivity",
+                    "x-display": "custom-conditional",
+                    "x-display-if": "(model) => model.section_1.remesh",
+                    "description": "Curvature adaptivity of remeshing (0 = uniform, 2.0 most adaptive).  This allocates more triangles/vertices to areas of higher curvature"
+                }
+            }
+        },
+        "section_2": {
+            "title": "Alignment Options",
+            "type": "object",
+            "properties": {
+                "reflect": {
+                    "type": "boolean",
+                    "default": false,
+                    "title": "Reflect",
+                    "description": "Option to reflect some shapes over a given axis if a given column matches a given value (e.g. reflect 'side' over 'Y' if 'left')"
+                },
+                "reflect_column": {
+                    "type": "string",
+                    "enum": [
+                        "shape_1", "groomed_1", "alignment_1",
+                        "procrustes_1", "local_particles_1", "world_particles_1"
+                    ],
+                    "default": "shape_1",
+                    "x-cols": 6,
+                    "x-display": "custom-conditional",
+                    "x-display-if":"(model) => model.section_2.reflect",
+                    "description": "Choice of spreadsheet column to determine which subjects should be reflected"
+                },
+                "reflect_axis": {
+                    "type": "string",
+                    "enum": [
+                        "X", "Y", "Z"
+                    ],
+                    "default": "X",
+                    "x-cols": 6,
+                    "x-display": "custom-conditional",
+                    "x-display-if":"(model) => model.section_2.reflect",
+                    "description": "Axis of reflection"
+                },
+                "alignment_enabled": {
+                    "type": "boolean",
+                    "default": true,
+                    "title": "Alignment",
+                    "x-cols": 6,
+                    "description": "Enable/Disable alignment"
+                },
+                "alignment_method": {
+                    "type": "string",
+                    "default": "Center",
+                    "title": "Align",
+                    "x-cols": 6,
+                    "enum": [
+                        "Center",
+                        "Iterative Closest Point",
+                        "Landmark"
+                    ],
+                    "x-class": "float-right pl-5",
+                    "x-display": "custom-conditional",
+                    "x-display-if": "(model) => model.section_2.alignment_enabled",
+                    "description": "Option to align with centering (center of mass), iterative closest point (translation and rotation), or landmarks (best fit, when specified)"
+                }
+            }
+        }
+    }
+}
