@@ -49,18 +49,11 @@ def is_same(dir1, dir2):
 
 def public_server_download(download_dir):
     with swcc_session() as public_server_session:
-        public_server_session.login('testuser@noemail.nil', 'cicdtest')
+        username = os.getenv('CICD_PUBLIC_USER')
+        password = os.getenv('CICD_PUBLIC_PASSWORD')
+        public_server_session.login(username, password)
         all_datasets = list(models.Dataset.list())
-        dataset_subset = [
-            d
-            for d in all_datasets
-            if d.name
-            in [
-                'deep_ssm_femur_tiny_test',
-                'ellipsoid_multiple_domain_tiny_test',
-                'left_atrium_tiny_test',
-            ]
-        ]
+        dataset_subset = [d for d in all_datasets if 'CI/CD' in d.keywords]
         project_subset = [next(d.projects, None) for d in dataset_subset]
         for project in project_subset:
             if project is not None:

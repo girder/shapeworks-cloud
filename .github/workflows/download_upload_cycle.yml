@@ -9,6 +9,8 @@ jobs:
       DJANGO_SUPERUSER_PASSWORD: django-password
       DJANGO_SUPERUSER_USERNAME: admin
       DJANGO_SUPERUSER_EMAIL: admin@noemail.com
+      CICD_PUBLIC_USER: ${{ secrets.CICD_PUBLIC_USER }}
+      CICD_PUBLIC_PASSWORD: ${{ secrets.CICD_PUBLIC_PASSWORD }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
