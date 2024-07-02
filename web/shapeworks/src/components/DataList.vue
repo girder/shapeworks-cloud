@@ -9,9 +9,11 @@ import {
     allSubjectsForDataset,
     allDataObjectsInDataset,
     anatomies,
+    selectedAnatomies,
     selectedDataObjects,
     loadingState,
     loadReconstructedSamplesForProject,
+imageViewMode,
 } from '@/store';
 
 
@@ -31,8 +33,6 @@ export default {
         }
     },
     setup(props) {
-
-        const selectedAnatomies = ref<string[]>([]);
         const selectedSubjects = ref<number[]>([])
         const headers =  [
             {text: 'ID', value: 'id'},
@@ -60,7 +60,10 @@ export default {
             )).flat()
             loadReconstructedSamplesForProject('', 0)
             anatomies.value = Object.keys(
-                groupBy(allDataObjectsInDataset.value, 'anatomy_type')
+                {
+                    ...groupBy(allDataObjectsInDataset.value, 'anatomy_type'),
+                    ...groupBy(allDataObjectsInDataset.value, 'modality'),
+                }
             ).filter((key) => key !== 'undefined')
             selectedAnatomies.value = anatomies.value;
             if(allSubjectsForDataset.value.length > 0) {
@@ -83,7 +86,8 @@ export default {
                     return (
                         (
                             !selectedAnatomies.value.length ||
-                            selectedAnatomies.value.includes(dataObject.anatomy_type)
+                            selectedAnatomies.value.includes(dataObject.anatomy_type) ||
+                            selectedAnatomies.value.includes(dataObject.modality)
                         ) && selectedSubjects.value.includes(dataObject.subject)
                     )
                 }
@@ -91,7 +95,13 @@ export default {
         }
 
         function selectedObjectsUpdated() {
-            const uniqueAnatomies = [...new Set(selectedDataObjects.value.map(item => item.anatomy_type))]
+            const uniqueAnatomies = [...new Set(selectedDataObjects.value.map(item => {
+                // if the item is an image, it will have "modality" instead of anatomy_type
+                if (item.modality && imageViewMode.value) {
+                    return item.modality
+                }
+                return item.anatomy_type
+            }))].filter((anatomy) => anatomy !== undefined);
             const uniqueSubjects = [...new Set(selectedDataObjects.value.map(item => item.subject))]
             if (JSON.stringify(uniqueAnatomies) !== JSON.stringify(selectedAnatomies.value)) {
                 selectedAnatomies.value = uniqueAnatomies
@@ -133,8 +143,9 @@ export default {
         <v-list dense shaped>
             <v-subheader>ANATOMIES</v-subheader>
             <v-list-item-group>
+                <!-- Anatomy list. Filter out any anatomies that match the image modality label (ex: anatomy_mri) -->
                 <v-list-item
-                    v-for="anatomy_type in anatomies"
+                    v-for="anatomy_type in anatomies.filter((anatomy) => anatomy !== allDataObjectsInDataset[0].modality)"
                     :key="anatomy_type"
                 >
                         <v-checkbox

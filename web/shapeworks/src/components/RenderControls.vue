@@ -33,6 +33,8 @@ import {
     deepSSMSamplePage,
     uniformScale,
     DEEPSSM_SAMPLES_PER_PAGE,
+    selectedAnatomies,
+    allDataObjectsInDataset,
 } from '@/store';
 
 
@@ -80,6 +82,17 @@ export default {
             }
         ]
         const axisSystem = ref()
+
+        function changeImageViewMode(value) {
+            imageViewMode.value = value;
+            // filter selectedAnatomies according to imageViewMode. True -> include 'anatomy_mri', False -> exclude 'anatomy_mri'
+            if (value) {
+                selectedAnatomies.value = [...selectedAnatomies.value, 'anatomy_mri']
+            } else {
+                const modality = allDataObjectsInDataset.value[0].modality
+                selectedAnatomies.value = selectedAnatomies.value.filter((anatomy) => anatomy !== modality)
+            }
+        }
 
         function changeAxisSystem(newSystemValue: string){
             const newSystem = axisSystemOptions.find(
@@ -272,6 +285,7 @@ export default {
             imageViewWindowRange,
             changeImageViewSlice,
             changeAxisSystem,
+            changeImageViewMode,
             resetView,
             selectedDataObjects,
             captureThumbnail,
@@ -331,7 +345,13 @@ export default {
                 :items="axisSystemOptions"
                 @change="changeAxisSystem"
                 label="Axis System"
-                style="width: 150px"
+                style="width: 100px"
+            />
+            <v-switch
+                v-if="layersShown.includes('Original')"
+                :value="imageViewMode"
+                @change="changeImageViewMode"
+                label="Image View"
             />
             <v-switch
                 v-if="showAnalysisOptions && currentTab === 'analyze'"

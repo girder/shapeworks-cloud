@@ -228,7 +228,7 @@ export default {
                             colorMode: ColorMode.MAP_SCALARS,
                             scalarMode: ScalarMode.USE_POINT_FIELD_DATA,
                         });
-                        if (shapeData.getClassName() == 'vtkImageData') {
+                        if (shapeData.getClassName() == 'vtkImageData' && layerName === 'Original - Image') {
                             this.addImage(shapeData, renderer)
                         } else {
                             if (shapeData.getClassName() == 'vtkPolyData') {

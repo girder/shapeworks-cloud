@@ -59,6 +59,7 @@ export const layers = ref<Record<string, any>[]>([
 
 export const vtkShapesByType = ref<Record<string, any[]>>({
     "Original": [],
+    "Original - Image": [],
     "Groomed": [],
     "Reconstructed": [],
     "Particles": [],

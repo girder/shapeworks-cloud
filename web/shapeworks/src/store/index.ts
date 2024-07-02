@@ -35,7 +35,9 @@ export const allDataObjectsInDataset = ref<DataObject[]>([])
 
 export const anatomies = ref<string[]>([]);
 
-export const selectedDataObjects = ref<DataObject[]>([])
+export const selectedAnatomies = ref<string[]>([]);
+
+export const selectedDataObjects = ref<DataObject[]>([]);
 
 export const orientationIndicator = ref<vtkAnnotatedCubeActor>(vtkAnnotatedCubeActor.newInstance())
 
