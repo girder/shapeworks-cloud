@@ -435,14 +435,15 @@ export default {
                                 (dataObject) => {
                                     const shapePromises: Promise<vtkPolyData | vtkImageData>[] = [];
                                     if(layersShown.value.includes("Original")){
-                                      shapePromises.push(
-                                        imageReader(
-                                            dataObject.file,
-                                            shortFileName(dataObject.file),
-                                            "Original",
-                                            dataObject.anatomy_type && { domain: dataObject.anatomy_type.replace('anatomy_', '') }
+                                        const layerLabel = dataObject.anatomy_type ? 'Original' : 'Original - Image'
+                                        shapePromises.push(
+                                            imageReader(
+                                                dataObject.file,
+                                                shortFileName(dataObject.file),
+                                                layerLabel,
+                                                dataObject.anatomy_type && { domain: dataObject.anatomy_type.replace('anatomy_', '') }
+                                            )
                                         )
-                                      )
                                     }
                                     if(layersShown.value.includes("Groomed")){
                                         if (
